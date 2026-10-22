@@ -14,6 +14,18 @@ export function drawRow(gl, planeMesh, uniforms, row) {
     });
 }
 
+// Zadanie 2: Wizualne rozdzielenie pasów ruchu – przerywana linia na środku drogi (z = -0.35)
+export function drawRoadMarkings(gl, cubeMesh, uniforms) {
+    const dashes = [-0.75, -0.45, -0.15, 0.15, 0.45, 0.75];
+    for (const x of dashes) {
+        drawMesh(gl, cubeMesh, uniforms, {
+            position: [x, GROUND_Y + 0.005, -0.35],
+            scale: [0.14, 0.01, 0.03],
+            color: [1.0, 1.0, 1.0]
+        });
+    }
+}
+
 export function drawPlayer(gl, cubeMesh, uniforms, player) {
     const [x, , z] = player.position;
 

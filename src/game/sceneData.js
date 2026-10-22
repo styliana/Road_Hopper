@@ -2,16 +2,19 @@
 export const rows = [
     { type: 'grass', z: 0.70 },
     { type: 'road', z: 0.00 },
-    { type: 'grass', z: -0.70 },
+    { type: 'road', z: -0.70 },
     { type: 'grass', z: -1.40, color: [0.08, 0.45, 0.18] }
 ];
 
 export const scene = {
     player: { position: [0.0, 0.0, 0.70] },
     cars: [
-        { position: [-0.60, 0.0, 0.00], color: [0.92, 0.12, 0.13], speed: 0.32 },
-        { position: [ 0.45, 0.0, 0.00], color: [0.12, 0.30, 0.90], speed: -0.42 },
-        { position: [ 0.00, 0.0, 0.00], color: [0.95, 0.60, 0.10], speed: 0.25 }
+        // Pas 1 (z = 0.00): ruch w prawo
+        { position: [-0.60, 0.0, 0.00], color: [0.92, 0.12, 0.13], speed: 0.40 },
+        { position: [ 0.60, 0.0, 0.00], color: [0.95, 0.60, 0.10], speed: 0.40 },
+        // Pas 2 (z = -0.70): ruch w lewo
+        { position: [ 0.60, 0.0, -0.70], color: [0.12, 0.30, 0.90], speed: -0.45 },
+        { position: [-0.60, 0.0, -0.70], color: [0.85, 0.20, 0.75], speed: -0.45 }
     ],
     trees: [
         { position: [-0.70, 0.0, 0.70] },

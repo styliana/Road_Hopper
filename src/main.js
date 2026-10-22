@@ -4,7 +4,7 @@ import { rows, scene } from './game/sceneData.js';
 import {
     createProgram, vertexShaderSource, fragmentShaderSource,
     createMesh, planeGeometry, cubeGeometry,
-    drawRow, drawPlayer, drawCar, drawTree
+    drawRow, drawRoadMarkings, drawPlayer, drawCar, drawTree
 } from './webgl/index.js';
 
 const canvas = document.querySelector('#gameCanvas');
@@ -25,10 +25,10 @@ const planeMesh = createMesh(gl, program, planeGeometry);
 const cubeMesh = createMesh(gl, program, cubeGeometry);
 
 const camera = {
-    eye: [2.5, 2.8, -3.8],
-    target: [0.0, -0.15, -0.35],
+    eye: [0.0, 1.85, 2.45], // Kamera TPP
+    target: [0.0, 0.0, -0.6],
     up: [0, 1, 0],
-    zoom: 1.8
+    zoom: 1.55
 };
 
 function resizeCanvas() {
@@ -62,6 +62,7 @@ function render() {
     gl.uniformMatrix4fv(uniforms.projection, false, projection);
 
     for (const row of rows) drawRow(gl, planeMesh, uniforms, row);
+    drawRoadMarkings(gl, cubeMesh, uniforms);
     drawPlayer(gl, cubeMesh, uniforms, scene.player);
     for (const car of scene.cars) drawCar(gl, cubeMesh, uniforms, car);
     for (const tree of scene.trees) drawTree(gl, cubeMesh, uniforms, tree);
