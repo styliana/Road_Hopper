@@ -68,6 +68,22 @@ function render() {
     for (const tree of scene.trees) drawTree(gl, cubeMesh, uniforms, tree);
 }
 
+const statusOverlay = document.querySelector('#statusOverlay');
+let isPaused = false;
+
+function togglePause() {
+    isPaused = !isPaused;
+    if (statusOverlay) {
+        if (isPaused) {
+            statusOverlay.textContent = '⏸ PAUZA (Spacja: Wznów)';
+            statusOverlay.classList.add('paused');
+        } else {
+            statusOverlay.textContent = '▶ W GRZE (Spacja: Pauza)';
+            statusOverlay.classList.remove('paused');
+        }
+    }
+}
+
 let previousTime = null;
 function frame(time) {
     const dt = previousTime === null
@@ -75,13 +91,24 @@ function frame(time) {
         : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
 
-    updateCars(dt);
+    if (!isPaused) {
+        updateCars(dt);
+    }
+
     render();
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 window.addEventListener('keydown', event => {
+    if (event.code === 'Space' || event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        togglePause();
+        return;
+    }
+
+    if (isPaused) return;
+
     if (!event.key.startsWith('Arrow')) return;
     event.preventDefault();
     if (event.repeat) return;
