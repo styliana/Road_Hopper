@@ -17,14 +17,13 @@ export const scene = {
         { position: [-0.85, 0.0, -0.70], color: [0.85, 0.20, 0.75], speed: -0.45 }
     ],
     trees: [
-        { position: [-1.45, 0.0, 0.70] },
-        { position: [ 1.45, 0.0, 0.70] },
-        {
-            position: [-0.20, 0.0, -1.40],
-            trunkHeight: 0.52,
-            crownColor: [0.85, 0.18, 0.12]
-        },
-        { position: [-1.45, 0.0, -1.40] },
-        { position: [ 1.45, 0.0, -1.40] }
+        { position: [-1.45, 0.0, 0.70], model: 'tree' },
+        { position: [-0.50, 0.0, 0.70], model: 'drzewko' },
+        { position: [ 0.50, 0.0, 0.70], model: 'tree' },
+        { position: [ 1.45, 0.0, 0.70], model: 'drzewko' },
+        { position: [-1.45, 0.0, -1.40], model: 'drzewko' },
+        { position: [-0.50, 0.0, -1.40], model: 'tree' },
+        { position: [ 0.50, 0.0, -1.40], model: 'drzewko' },
+        { position: [ 1.45, 0.0, -1.40], model: 'tree' }
     ]
 };

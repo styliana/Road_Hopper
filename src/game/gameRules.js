@@ -26,10 +26,10 @@ export function applySpeedIncrease() {
 
 export function checkCollision() {
     const player = scene.player.position;
-    const halfPlayerX = 0.09;
-    const halfCarX = 0.20;
-    const halfPlayerZ = 0.09;
-    const halfCarZ = 0.11;
+    const halfPlayerX = 0.10;
+    const halfCarX = 0.22;
+    const halfPlayerZ = 0.10;
+    const halfCarZ = 0.12;
 
     return scene.cars.some(car => {
         const dx = Math.abs(player[0] - car.position[0]);

@@ -45,7 +45,7 @@ export function createBasicObjects(scene3D, catTemplate) {
         scene3D.add(marking);
     }
 
-    const playerRoot = makeInstance(catTemplate, 0.34);
+    const playerRoot = makeInstance(catTemplate, 0.37);
     playerRoot.rotation.y = Math.PI;
     scene3D.add(playerRoot);
     objects.playerRoot = playerRoot;
@@ -61,16 +61,19 @@ export function orientPlayer(key) {
     objects.playerRoot.rotation.y = rotation;
 }
 
-export function addModels(scene3D, carTemplate, treeTemplate) {
+export function addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
     for (const car of gameScene.cars) {
-        const root = makeInstance(carTemplate, 0.40);
+        const root = makeInstance(carTemplate, 0.44);
         root.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2;
         scene3D.add(root);
         objects.cars.push(root);
     }
 
     for (const tree of gameScene.trees) {
-        const root = makeInstance(treeTemplate, 0.70);
+        const template = tree.model === 'drzewko'
+            ? newTreeTemplate
+            : treeTemplate;
+        const root = makeInstance(template, 0.70);
         scene3D.add(root);
         objects.trees.push(root);
     }
