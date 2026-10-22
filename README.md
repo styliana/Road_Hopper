@@ -22,7 +22,7 @@ Jeżeli PowerShell blokuje `npm.ps1`, uruchom `npm.cmd install` i `npm.cmd run d
 - `src/main.js` – scena, kamera, renderer Three.js i dotychczasowa logika gry.
 - `src/game/` – logika gry zachowana z poprzedniego etapu.
 
-Modele samochodu i drzewa w `public/models/` są prostymi, oryginalnymi modelami low-poly. `kociak.glb` jest modelem gracza; dotychczasowe sterowanie i wykrywanie kolizji pozostają bez zmian.
+Modele samochodu i drzewa w `public/models/` są prostymi, oryginalnymi modelami low-poly. `kociak.glb` jest modelem gracza i jest obrócony w stronę mety; dotychczasowe sterowanie i wykrywanie kolizji pozostają bez zmian.
 
 ## Oddanie
 

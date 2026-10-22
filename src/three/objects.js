@@ -39,6 +39,7 @@ export function createBasicObjects(scene3D, catTemplate) {
     }
 
     const playerRoot = makeInstance(catTemplate, 0.34);
+    playerRoot.rotation.y = Math.PI;
     scene3D.add(playerRoot);
     objects.playerRoot = playerRoot;
 }
