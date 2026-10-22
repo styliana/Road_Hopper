@@ -1,3 +1,4 @@
+import { mat4 } from 'gl-matrix';
 import { rows, scene } from './game/sceneData.js';
 import {
     createProgram, vertexShaderSource, fragmentShaderSource,
@@ -13,13 +14,21 @@ const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 gl.useProgram(program);
 
 const uniforms = {
-    position: gl.getUniformLocation(program, 'uPosition'),
-    scale: gl.getUniformLocation(program, 'uScale'),
+    model: gl.getUniformLocation(program, 'uModel'),
+    view: gl.getUniformLocation(program, 'uView'),
+    projection: gl.getUniformLocation(program, 'uProjection'),
     color: gl.getUniformLocation(program, 'uColor')
 };
 
 const planeMesh = createMesh(gl, program, planeGeometry);
 const cubeMesh = createMesh(gl, program, cubeGeometry);
+
+const camera = {
+    eye: [2.5, 2.8, -3.8],
+    target: [0.0, -0.15, -0.35],
+    up: [0, 1, 0],
+    zoom: 1.8
+};
 
 function resizeCanvas() {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -38,6 +47,18 @@ function render() {
     gl.clearColor(0.075, 0.10, 0.15, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
+
+    const aspect = canvas.width / canvas.height;
+    const view = mat4.create();
+    mat4.lookAt(view, camera.eye, camera.target, camera.up);
+
+    const projection = mat4.create();
+    mat4.ortho(projection,
+        -camera.zoom * aspect, camera.zoom * aspect,
+        -camera.zoom, camera.zoom, 0.1, 100);
+
+    gl.uniformMatrix4fv(uniforms.view, false, view);
+    gl.uniformMatrix4fv(uniforms.projection, false, projection);
 
     for (const row of rows) drawRow(gl, planeMesh, uniforms, row);
     drawPlayer(gl, cubeMesh, uniforms, scene.player);
