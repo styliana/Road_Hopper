@@ -1,14 +1,28 @@
 import { rows, scene } from './sceneData.js';
 
 export const gameState = {
-    status: 'playing', // playing, lost lub won
+    status: 'playing', // 'playing', 'lost' lub 'won'
     score: 0,
-    bestLane: 0
+    bestScore: 0,      // Zadanie 3: licznik najlepszego wyniku (High Score)
+    bestLane: 0,
+    lives: 3,
+    maxLives: 3,
+    speedMultiplier: 1.0
 };
 
 const startPlayer = [...scene.player.position];
 const startCars = scene.cars.map(car => [...car.position]);
+const startCarSpeeds = scene.cars.map(car => car.speed);
 const lanes = rows.map(row => row.z).sort((a, b) => b - a);
+
+export function applySpeedIncrease() {
+    // Każde 10 punktów zwiększa prędkość aut o 25% (kierunek/znak prędkości zostaje zachowany)
+    const multiplier = 1 + (gameState.score * 0.025);
+    gameState.speedMultiplier = multiplier;
+    scene.cars.forEach((car, index) => {
+        car.speed = startCarSpeeds[index] * multiplier;
+    });
+}
 
 export function checkCollision() {
     const player = scene.player.position;
@@ -29,7 +43,14 @@ export function updateGameState() {
     if (gameState.status !== 'playing') return;
 
     if (checkCollision()) {
-        gameState.status = 'lost';
+        gameState.lives -= 1;
+        // Przeniesienie gracza na pole startowe po kolizji
+        scene.player.position.splice(0, 3, ...startPlayer);
+
+        // Przegrana następuje dopiero po utracie wszystkich żyć
+        if (gameState.lives <= 0) {
+            gameState.status = 'lost';
+        }
         return;
     }
 
@@ -40,6 +61,12 @@ export function updateGameState() {
     if (lane > gameState.bestLane) {
         gameState.score += (lane - gameState.bestLane) * 10;
         gameState.bestLane = lane;
+        // Zadanie 3: Aktualizacja rekordu, jeśli gracz uzyska więcej punktów niż dotychczas
+        if (gameState.score > gameState.bestScore) {
+            gameState.bestScore = gameState.score;
+        }
+        // Zadanie 2: Stopniowe zwiększanie prędkości aut wraz z punktami
+        applySpeedIncrease();
     }
 
     if (lane === lanes.length - 1) {
@@ -51,8 +78,13 @@ export function restartGame() {
     scene.player.position.splice(0, 3, ...startPlayer);
     scene.cars.forEach((car, index) => {
         car.position.splice(0, 3, ...startCars[index]);
+        // Zadanie 2: Przywrócenie prędkości początkowych
+        car.speed = startCarSpeeds[index];
     });
     gameState.status = 'playing';
     gameState.score = 0;
     gameState.bestLane = 0;
+    gameState.lives = gameState.maxLives;
+    gameState.speedMultiplier = 1.0;
+    // Zadanie 3: gameState.bestScore pozostaje zachowany po restarcie gry
 }

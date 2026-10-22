@@ -2,6 +2,7 @@ import { drawMesh } from './renderer.js';
 
 const GROUND_Y = -0.45;
 
+// Ta sama płaszczyzna przedstawia drogę lub trawę.
 export function drawRow(gl, planeMesh, uniforms, row) {
     const color = row.color ?? (row.type === 'road'
         ? [0.19, 0.19, 0.21]
@@ -9,14 +10,14 @@ export function drawRow(gl, planeMesh, uniforms, row) {
 
     drawMesh(gl, planeMesh, uniforms, {
         position: [0.0, GROUND_Y, row.z],
-        scale: [1.8, 1.0, 0.65],
+        scale: [3.2, 1.0, 0.68], // Poszerzenie pola gry względem postaci
         color
     });
 }
 
 // Zadanie 2: Wizualne rozdzielenie pasów ruchu – przerywana linia na środku drogi (z = -0.35)
 export function drawRoadMarkings(gl, cubeMesh, uniforms) {
-    const dashes = [-0.75, -0.45, -0.15, 0.15, 0.45, 0.75];
+    const dashes = [-1.35, -1.05, -0.75, -0.45, -0.15, 0.15, 0.45, 0.75, 1.05, 1.35];
     for (const x of dashes) {
         drawMesh(gl, cubeMesh, uniforms, {
             position: [x, GROUND_Y + 0.005, -0.35],
@@ -26,6 +27,7 @@ export function drawRoadMarkings(gl, cubeMesh, uniforms) {
     }
 }
 
+// Gracz: ciało + głowa (2 razy cubeMesh).
 export function drawPlayer(gl, cubeMesh, uniforms, player) {
     const [x, , z] = player.position;
 
@@ -41,6 +43,7 @@ export function drawPlayer(gl, cubeMesh, uniforms, player) {
     });
 }
 
+// Samochód: nadwozie + dach (2 razy cubeMesh).
 export function drawCar(gl, cubeMesh, uniforms, car) {
     const [x, , z] = car.position;
 
@@ -56,6 +59,7 @@ export function drawCar(gl, cubeMesh, uniforms, car) {
     });
 }
 
+// Drzewo: pień + korona (2 razy cubeMesh).
 export function drawTree(gl, cubeMesh, uniforms, tree) {
     const [x, , z] = tree.position;
     const trunkHeight = tree.trunkHeight ?? 0.34;

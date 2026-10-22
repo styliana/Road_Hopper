@@ -46,4 +46,8 @@ html, body {
     pointer-events: none;
 }
 #hud span { display: block; }
+#bestScore { color: #f59e0b; font-weight: 600; }
+#speed { color: #60a5fa; font-weight: 500; }
+#lives { color: #ff6b6b; font-weight: 600; margin: 2px 0; }
 #status { color: #d8e4ea; font-weight: 400; }
+

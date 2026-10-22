@@ -12,6 +12,9 @@ import {
 
 const canvas = document.querySelector('#gameCanvas');
 const scoreLabel = document.querySelector('#score');
+const bestScoreLabel = document.querySelector('#bestScore');
+const speedLabel = document.querySelector('#speed');
+const livesLabel = document.querySelector('#lives');
 const statusLabel = document.querySelector('#status');
 const gl = canvas.getContext('webgl2');
 if (!gl) throw new Error('Ta przeglądarka nie udostępnia WebGL2.');
@@ -26,14 +29,15 @@ const uniforms = {
     color: gl.getUniformLocation(program, 'uColor')
 };
 
+// Każda geometria trafia do GPU tylko raz.
 const planeMesh = createMesh(gl, program, planeGeometry);
 const cubeMesh = createMesh(gl, program, cubeGeometry);
 
 const camera = {
-    eye: [0.0, 1.85, 2.45], // Kamera TPP
-    target: [0.0, 0.0, -0.6],
-    up: [0, 1, 0],
-    zoom: 1.55
+    eye: [0.0, 1.85, 2.45], // Kamera TPP dostosowana do poszerzonej sceny
+    target: [0.0, 0.0, -0.6], // Punkt skupienia przed graczem na drodze
+    up: [0, 1, 0], // Kierunek góry
+    zoom: 1.55 // Zakres widoku obejmujący całe poszerzone pole gry
 };
 
 function resizeCanvas() {
@@ -75,8 +79,18 @@ function render() {
 
 function updateHud() {
     scoreLabel.textContent = `Punkty: ${gameState.score}`;
+    if (bestScoreLabel) {
+        bestScoreLabel.textContent = `Najlepszy wynik: ${gameState.bestScore}`;
+    }
+    if (speedLabel) {
+        speedLabel.textContent = `Prędkość aut: ${gameState.speedMultiplier.toFixed(2)}x`;
+    }
+    if (livesLabel) {
+        const hearts = '❤️'.repeat(Math.max(0, gameState.lives)) || '💀';
+        livesLabel.textContent = `Życia: ${hearts} (${gameState.lives}/${gameState.maxLives})`;
+    }
     if (gameState.status === 'lost') {
-        statusLabel.textContent = 'Kolizja! Naciśnij R.';
+        statusLabel.textContent = 'Koniec gry! Brak żyć. Naciśnij R.';
     } else if (gameState.status === 'won') {
         statusLabel.textContent = 'Meta! Naciśnij R.';
     } else {
@@ -84,6 +98,7 @@ function updateHud() {
     }
 }
 
+// Zadanie 3: Obsługa pauzy oraz blokada ruchu gracza
 const statusOverlay = document.querySelector('#statusOverlay');
 let isPaused = false;
 
@@ -102,6 +117,8 @@ function togglePause() {
 
 let previousTime = null;
 function frame(time) {
+    // Obliczanie dt i aktualizowanie previousTime nawet podczas pauzy,
+    // aby po wznowieniu gry nie nastąpił nagły przeskok obiektów.
     const dt = previousTime === null
         ? 0
         : Math.min((time - previousTime) / 1000, 0.05);
@@ -119,17 +136,20 @@ function frame(time) {
 requestAnimationFrame(frame);
 
 window.addEventListener('keydown', event => {
+    // Przełączanie pauzy klawiszem spacji lub p
     if (event.code === 'Space' || event.key.toLowerCase() === 'p') {
         event.preventDefault();
         togglePause();
         return;
     }
 
+    // Restart klawiszem R
     if (event.key.toLowerCase() === 'r') {
         if (!event.repeat) restartGame();
         return;
     }
 
+    // Gdy gra jest zapauzowana lub nie trwa rozgrywka, ruch gracza jest zablokowany
     if (isPaused || gameState.status !== 'playing') return;
 
     if (!event.key.startsWith('Arrow')) return;
@@ -137,3 +157,4 @@ window.addEventListener('keydown', event => {
     if (event.repeat) return;
     movePlayer(event.key);
 });
+
