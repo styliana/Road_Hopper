@@ -10,6 +10,13 @@ export const objects = {
     trees: []
 };
 
+const playerRotations = {
+    ArrowUp: Math.PI,
+    ArrowDown: 0,
+    ArrowLeft: -Math.PI / 2,
+    ArrowRight: Math.PI / 2
+};
+
 export function createBasicObjects(scene3D, catTemplate) {
     const rowGeometry = new THREE.BoxGeometry(3.2, 0.04, 0.68);
     const rowMaterials = new Map();
@@ -42,6 +49,16 @@ export function createBasicObjects(scene3D, catTemplate) {
     playerRoot.rotation.y = Math.PI;
     scene3D.add(playerRoot);
     objects.playerRoot = playerRoot;
+}
+
+export function orientPlayer(key) {
+    const rotation = playerRotations[key];
+    if (rotation === undefined) return;
+    if (!objects.playerRoot) {
+        throw new Error('Obiekt gracza Three.js nie został utworzony');
+    }
+
+    objects.playerRoot.rotation.y = rotation;
 }
 
 export function addModels(scene3D, carTemplate, treeTemplate) {

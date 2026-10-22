@@ -5,7 +5,7 @@ import {
 } from './game/gameRules.js';
 import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
-    addModels, createBasicObjects, syncObjects
+    addModels, createBasicObjects, orientPlayer, syncObjects
 } from './three/objects.js';
 
 const canvas = document.querySelector('#gameCanvas');
@@ -126,7 +126,10 @@ window.addEventListener('keydown', event => {
 
     // Restart klawiszem R
     if (event.key.toLowerCase() === 'r') {
-        if (!event.repeat) restartGame();
+        if (!event.repeat) {
+            restartGame();
+            orientPlayer('ArrowUp');
+        }
         return;
     }
 
@@ -137,4 +140,5 @@ window.addEventListener('keydown', event => {
     event.preventDefault();
     if (event.repeat) return;
     movePlayer(event.key);
+    orientPlayer(event.key);
 });
