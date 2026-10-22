@@ -66,4 +66,14 @@ function render() {
     for (const tree of scene.trees) drawTree(gl, cubeMesh, uniforms, tree);
 }
 
-render();
+let previousTime = null;
+function frame(time) {
+    const dt = previousTime === null
+        ? 0
+        : Math.min((time - previousTime) / 1000, 0.05);
+    previousTime = time;
+
+    render();
+    requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
