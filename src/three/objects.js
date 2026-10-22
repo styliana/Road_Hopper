@@ -10,7 +10,7 @@ export const objects = {
     trees: []
 };
 
-export function createBasicObjects(scene3D) {
+export function createBasicObjects(scene3D, catTemplate) {
     const rowGeometry = new THREE.BoxGeometry(3.2, 0.04, 0.68);
     const rowMaterials = new Map();
 
@@ -38,19 +38,7 @@ export function createBasicObjects(scene3D) {
         scene3D.add(marking);
     }
 
-    const playerRoot = new THREE.Group();
-    const yellow = new THREE.MeshBasicMaterial({ color: 0xffbf20 });
-    const body = new THREE.Mesh(
-        new THREE.BoxGeometry(0.18, 0.24, 0.18),
-        yellow
-    );
-    const head = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 0.13, 0.13),
-        yellow
-    );
-    body.position.y = 0.12;
-    head.position.y = 0.30;
-    playerRoot.add(body, head);
+    const playerRoot = makeInstance(catTemplate, 0.34);
     scene3D.add(playerRoot);
     objects.playerRoot = playerRoot;
 }
