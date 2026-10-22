@@ -16,13 +16,14 @@ Jeżeli PowerShell blokuje `npm.ps1`, uruchom `npm.cmd install` i `npm.cmd run d
 
 - `src/three/modelLoader.js` – wczytywanie modeli GLB, dopasowanie ich rozmiaru i zliczanie trójkątów.
 - `src/three/objects.js` – plansza, postać, modele aut i drzew oraz synchronizacja z logiką gry.
-- `public/models/car.glb` – oryginalny model low-poly samochodu.
+- `public/models/car.glb` – wcześniejszy model samochodu, obecnie niewykorzystywany.
+- `public/models/szczur.glb` – dostarczony model szczura używany jako pojazdy.
 - `public/models/tree.glb` – oryginalny model low-poly drzewa.
 - `public/models/kociak.glb` – model kociaka używany jako postać gracza.
 - `src/main.js` – scena, kamera, renderer Three.js i dotychczasowa logika gry.
 - `src/game/` – logika gry zachowana z poprzedniego etapu.
 
-Modele samochodu i drzewa w `public/models/` są prostymi, oryginalnymi modelami low-poly. `kociak.glb` jest modelem gracza i jest obrócony w stronę mety; dotychczasowe sterowanie i wykrywanie kolizji pozostają bez zmian.
+`szczur.glb` jest używany jako model poruszających się pojazdów, a `kociak.glb` jako model gracza skierowany w stronę mety. Dotychczasowe sterowanie i wykrywanie kolizji pozostają bez zmian.
 
 ## Oddanie
 

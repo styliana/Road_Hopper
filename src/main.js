@@ -85,16 +85,16 @@ function togglePause() {
     }
 }
 
-const [carTemplate, treeTemplate, catTemplate] = await Promise.all([
-    loadTemplate('/models/car.glb'),
+const [ratTemplate, treeTemplate, catTemplate] = await Promise.all([
+    loadTemplate('/models/szczur.glb'),
     loadTemplate('/models/tree.glb'),
     loadTemplate('/models/kociak.glb')
 ]);
-console.log('Samochód:', countTriangles(carTemplate));
+console.log('Szczur:', countTriangles(ratTemplate));
 console.log('Drzewo:', countTriangles(treeTemplate));
 console.log('Kociak:', countTriangles(catTemplate));
 createBasicObjects(scene3D, catTemplate);
-addModels(scene3D, carTemplate, treeTemplate);
+addModels(scene3D, ratTemplate, treeTemplate);
 
 let previousTime = null;
 function frame(time) {
