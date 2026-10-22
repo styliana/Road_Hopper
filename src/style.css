@@ -33,3 +33,17 @@ html, body {
     color: #ffffff;
     border-color: rgba(239, 68, 68, 0.4);
 }
+
+#hud {
+    position: fixed;
+    top: 64px;
+    left: 18px;
+    padding: 10px 14px;
+    background: rgba(14, 20, 29, 0.82);
+    color: #f7f9fc;
+    border-radius: 8px;
+    font: 600 13px/1.5 system-ui, sans-serif;
+    pointer-events: none;
+}
+#hud span { display: block; }
+#status { color: #d8e4ea; font-weight: 400; }

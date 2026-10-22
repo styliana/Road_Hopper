@@ -2,12 +2,17 @@ import { mat4 } from 'gl-matrix';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import { rows, scene } from './game/sceneData.js';
 import {
+    gameState, updateGameState
+} from './game/gameRules.js';
+import {
     createProgram, vertexShaderSource, fragmentShaderSource,
     createMesh, planeGeometry, cubeGeometry,
     drawRow, drawRoadMarkings, drawPlayer, drawCar, drawTree
 } from './webgl/index.js';
 
 const canvas = document.querySelector('#gameCanvas');
+const scoreLabel = document.querySelector('#score');
+const statusLabel = document.querySelector('#status');
 const gl = canvas.getContext('webgl2');
 if (!gl) throw new Error('Ta przeglądarka nie udostępnia WebGL2.');
 
@@ -68,6 +73,17 @@ function render() {
     for (const tree of scene.trees) drawTree(gl, cubeMesh, uniforms, tree);
 }
 
+function updateHud() {
+    scoreLabel.textContent = `Punkty: ${gameState.score}`;
+    if (gameState.status === 'lost') {
+        statusLabel.textContent = 'Kolizja! Naciśnij R.';
+    } else if (gameState.status === 'won') {
+        statusLabel.textContent = 'Meta! Naciśnij R.';
+    } else {
+        statusLabel.textContent = 'Dotrzyj do ostatniego pasa trawy.';
+    }
+}
+
 const statusOverlay = document.querySelector('#statusOverlay');
 let isPaused = false;
 
@@ -91,11 +107,13 @@ function frame(time) {
         : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
 
-    if (!isPaused) {
+    if (!isPaused && gameState.status === 'playing') {
         updateCars(dt);
+        updateGameState();
     }
 
     render();
+    updateHud();
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -107,7 +125,7 @@ window.addEventListener('keydown', event => {
         return;
     }
 
-    if (isPaused) return;
+    if (isPaused || gameState.status !== 'playing') return;
 
     if (!event.key.startsWith('Arrow')) return;
     event.preventDefault();

@@ -24,3 +24,25 @@ export function checkCollision() {
                dz < halfPlayerZ + halfCarZ;
     });
 }
+
+export function updateGameState() {
+    if (gameState.status !== 'playing') return;
+
+    if (checkCollision()) {
+        gameState.status = 'lost';
+        return;
+    }
+
+    const lane = lanes.findIndex(z =>
+        Math.abs(z - scene.player.position[2]) < 0.001
+    );
+
+    if (lane > gameState.bestLane) {
+        gameState.score += (lane - gameState.bestLane) * 10;
+        gameState.bestLane = lane;
+    }
+
+    if (lane === lanes.length - 1) {
+        gameState.status = 'won';
+    }
+}
