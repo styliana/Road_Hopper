@@ -46,3 +46,13 @@ export function updateGameState() {
         gameState.status = 'won';
     }
 }
+
+export function restartGame() {
+    scene.player.position.splice(0, 3, ...startPlayer);
+    scene.cars.forEach((car, index) => {
+        car.position.splice(0, 3, ...startCars[index]);
+    });
+    gameState.status = 'playing';
+    gameState.score = 0;
+    gameState.bestLane = 0;
+}

@@ -2,7 +2,7 @@ import { mat4 } from 'gl-matrix';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import { rows, scene } from './game/sceneData.js';
 import {
-    gameState, updateGameState
+    gameState, updateGameState, restartGame
 } from './game/gameRules.js';
 import {
     createProgram, vertexShaderSource, fragmentShaderSource,
@@ -122,6 +122,11 @@ window.addEventListener('keydown', event => {
     if (event.code === 'Space' || event.key.toLowerCase() === 'p') {
         event.preventDefault();
         togglePause();
+        return;
+    }
+
+    if (event.key.toLowerCase() === 'r') {
+        if (!event.repeat) restartGame();
         return;
     }
 
