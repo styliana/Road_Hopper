@@ -1,14 +1,12 @@
-import { mat4 } from 'gl-matrix';
+import * as THREE from 'three';
 import { updateCars, movePlayer } from './game/gameLogic.js';
-import { rows, scene } from './game/sceneData.js';
 import {
     gameState, updateGameState, restartGame
 } from './game/gameRules.js';
+import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
-    createProgram, vertexShaderSource, fragmentShaderSource,
-    createMesh, planeGeometry, cubeGeometry,
-    drawRow, drawRoadMarkings, drawPlayer, drawCar, drawTree
-} from './webgl/index.js';
+    addModels, createBasicObjects, syncObjects
+} from './three/objects.js';
 
 const canvas = document.querySelector('#gameCanvas');
 const scoreLabel = document.querySelector('#score');
@@ -16,65 +14,37 @@ const bestScoreLabel = document.querySelector('#bestScore');
 const speedLabel = document.querySelector('#speed');
 const livesLabel = document.querySelector('#lives');
 const statusLabel = document.querySelector('#status');
-const gl = canvas.getContext('webgl2');
-if (!gl) throw new Error('Ta przeglądarka nie udostępnia WebGL2.');
 
-const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
-gl.useProgram(program);
+const scene3D = new THREE.Scene();
+scene3D.background = new THREE.Color(0x141b26);
 
-const uniforms = {
-    model: gl.getUniformLocation(program, 'uModel'),
-    view: gl.getUniformLocation(program, 'uView'),
-    projection: gl.getUniformLocation(program, 'uProjection'),
-    color: gl.getUniformLocation(program, 'uColor')
-};
+const renderer3D = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer3D.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer3D.outputColorSpace = THREE.SRGBColorSpace;
 
-// Każda geometria trafia do GPU tylko raz.
-const planeMesh = createMesh(gl, program, planeGeometry);
-const cubeMesh = createMesh(gl, program, cubeGeometry);
+const camera3D = new THREE.OrthographicCamera(-3, 3, 2.2, -2.2, 0.1, 100);
+camera3D.position.set(0, 2.4, 3.2);
+camera3D.lookAt(0, -0.2, -0.35);
 
-const camera = {
-    eye: [0.0, 1.85, 2.45], // Kamera TPP dostosowana do poszerzonej sceny
-    target: [0.0, 0.0, -0.6], // Punkt skupienia przed graczem na drodze
-    up: [0, 1, 0], // Kierunek góry
-    zoom: 1.55 // Zakres widoku obejmujący całe poszerzone pole gry
-};
-
-function resizeCanvas() {
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.round(canvas.clientWidth * ratio);
-    const height = Math.round(canvas.clientHeight * ratio);
-    if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-    }
-    gl.viewport(0, 0, canvas.width, canvas.height);
-}
+scene3D.add(new THREE.AmbientLight(0xffffff, 1.5));
+const light = new THREE.DirectionalLight(0xffffff, 2.0);
+light.position.set(-2, 5, 4);
+scene3D.add(light);
 
 function render() {
-    resizeCanvas();
-    gl.enable(gl.DEPTH_TEST);
-    gl.clearColor(0.075, 0.10, 0.15, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(program);
+    const width = Math.max(1, canvas.clientWidth);
+    const height = Math.max(1, canvas.clientHeight);
+    renderer3D.setSize(width, height, false);
 
-    const aspect = canvas.width / canvas.height;
-    const view = mat4.create();
-    mat4.lookAt(view, camera.eye, camera.target, camera.up);
-
-    const projection = mat4.create();
-    mat4.ortho(projection,
-        -camera.zoom * aspect, camera.zoom * aspect,
-        -camera.zoom, camera.zoom, 0.1, 100);
-
-    gl.uniformMatrix4fv(uniforms.view, false, view);
-    gl.uniformMatrix4fv(uniforms.projection, false, projection);
-
-    for (const row of rows) drawRow(gl, planeMesh, uniforms, row);
-    drawRoadMarkings(gl, cubeMesh, uniforms);
-    drawPlayer(gl, cubeMesh, uniforms, scene.player);
-    for (const car of scene.cars) drawCar(gl, cubeMesh, uniforms, car);
-    for (const tree of scene.trees) drawTree(gl, cubeMesh, uniforms, tree);
+    const zoom = 2.2;
+    const aspect = width / height;
+    camera3D.left = -zoom * aspect;
+    camera3D.right = zoom * aspect;
+    camera3D.top = zoom;
+    camera3D.bottom = -zoom;
+    camera3D.updateProjectionMatrix();
+    syncObjects();
+    renderer3D.render(scene3D, camera3D);
 }
 
 function updateHud() {
@@ -114,6 +84,15 @@ function togglePause() {
         }
     }
 }
+
+const [carTemplate, treeTemplate] = await Promise.all([
+    loadTemplate('/models/car.glb'),
+    loadTemplate('/models/tree.glb')
+]);
+console.log('Samochód:', countTriangles(carTemplate));
+console.log('Drzewo:', countTriangles(treeTemplate));
+createBasicObjects(scene3D);
+addModels(scene3D, carTemplate, treeTemplate);
 
 let previousTime = null;
 function frame(time) {
@@ -157,4 +136,3 @@ window.addEventListener('keydown', event => {
     if (event.repeat) return;
     movePlayer(event.key);
 });
-

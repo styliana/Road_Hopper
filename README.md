@@ -1,30 +1,27 @@
-# Road Hopper 3D – Laboratorium 1 / WebGL2
+# Road Hopper 3D – Laboratorium 4 / Three.js
 
-Jest to **kompletny, uruchamialny projekt** przeznaczony do analizowania podczas zajęć.
-W kodzie **nie ma zadań TODO** ani brakujących funkcji. Podczas laboratorium najpierw uruchom projekt, a następnie wykonuj eksperymenty opisane w `docs/Laboratorium_1_WebGL2_Road_Hopper_NOWE.pdf`.
+Projekt pokazuje etap laboratorium 4: renderowanie w Three.js, modele samochodu i drzewa wczytywane z GLB oraz planszę i gracza zsynchronizowanych z dotychczasową logiką gry.
 
 ## Uruchomienie
 
 1. Sprawdź w terminalu: `node --version` oraz `npm --version`. Jeśli Node.js nie jest zainstalowany, pobierz wersję LTS z https://nodejs.org/en/download.
-2. Otwórz katalog `road-hopper-3d` w Visual Studio Code.
+2. Otwórz katalog `games_programming` w Visual Studio Code.
 3. W terminalu w tym katalogu wykonaj `npm install`.
 4. Uruchom `npm run dev` i otwórz adres podany przez Vite, zwykle `http://localhost:5173/`.
 
-Nie trzeba instalować WebGL ani Three.js. WebGL2 jest obsługiwane przez zgodną przeglądarkę.
+Three.js jest zależnością projektu. Potrzebna jest przeglądarka obsługująca WebGL.
 Jeżeli PowerShell blokuje `npm.ps1`, uruchom `npm.cmd install` i `npm.cmd run dev` lub skorzystaj z terminala CMD.
 
 ## Organizacja
 
-- `src/game/sceneData.js` – **jakie** obiekty istnieją i gdzie się znajdują.
-- `src/webgl/primitiveObjects.js` – **jak wyglądają** bryły gracza, aut, drzew i podłoża.
-- `src/webgl/geometry.js` – pozycje wierzchołków płaszczyzny i sześcianu.
-- `src/webgl/mesh.js` – VBO / VAO i konfigurowanie atrybutów.
-- `src/webgl/renderer.js` – uniformy oraz `drawArrays`.
-- `src/shaders/vertexShader.js` – wyznaczanie pozycji wierzchołków.
-- `src/shaders/fragmentShader.js` – kolor fragmentów.
-- `src/main.js` – inicjalizacja programu i kolejność renderowania sceny.
+- `src/three/modelLoader.js` – wczytywanie modeli GLB, dopasowanie ich rozmiaru i zliczanie trójkątów.
+- `src/three/objects.js` – plansza, postać, modele aut i drzew oraz synchronizacja z logiką gry.
+- `public/models/car.glb` – oryginalny model low-poly samochodu.
+- `public/models/tree.glb` – oryginalny model low-poly drzewa.
+- `src/main.js` – scena, kamera, renderer Three.js i dotychczasowa logika gry.
+- `src/game/` – logika gry zachowana z poprzedniego etapu.
 
-**Uwaga:** Po każdym eksperymencie zapisz zmiany, obserwuj efekt w przeglądarce, zanotuj wniosek, a następnie przywróć wartość początkową, jeżeli instrukcja nie mówi inaczej. Dzięki temu następne eksperymenty zaczynają się od tej samej sceny.
+Modele w `public/models/` są prostymi, oryginalnymi modelami low-poly przygotowanymi do uruchomienia projektu. Można zastąpić je własnymi plikami GLB pod tymi samymi ścieżkami.
 
 ## Oddanie
 
