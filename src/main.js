@@ -1,5 +1,5 @@
 import { mat4 } from 'gl-matrix';
-import { updateCars } from './game/gameLogic.js';
+import { updateCars, movePlayer } from './game/gameLogic.js';
 import { rows, scene } from './game/sceneData.js';
 import {
     createProgram, vertexShaderSource, fragmentShaderSource,
@@ -79,3 +79,10 @@ function frame(time) {
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+window.addEventListener('keydown', event => {
+    if (!event.key.startsWith('Arrow')) return;
+    event.preventDefault();
+    if (event.repeat) return;
+    movePlayer(event.key);
+});
