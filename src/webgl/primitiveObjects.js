@@ -46,8 +46,8 @@ export function drawCar(gl, cubeMesh, uniforms, car) {
 
 export function drawTree(gl, cubeMesh, uniforms, tree) {
     const [x, , z] = tree.position;
-    const trunkHeight = 0.34;
-    const crownColor = [0.10, 0.54, 0.18];
+    const trunkHeight = tree.trunkHeight ?? 0.34;
+    const crownColor = tree.crownColor ?? [0.10, 0.54, 0.18];
 
     drawMesh(gl, cubeMesh, uniforms, {
         position: [x, GROUND_Y + trunkHeight / 2, z],

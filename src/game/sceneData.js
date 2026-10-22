@@ -14,6 +14,11 @@ export const scene = {
     ],
     trees: [
         { position: [-0.70, 0.0, 0.70] },
-        { position: [ 0.70, 0.0, 0.70] }
+        { position: [ 0.70, 0.0, 0.70] },
+        {
+            position: [-0.20, 0.0, -0.70],
+            trunkHeight: 0.52,
+            crownColor: [0.85, 0.18, 0.12]
+        }
     ]
 };
