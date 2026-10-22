@@ -2,7 +2,8 @@
 export const rows = [
     { type: 'grass', z: 0.70 },
     { type: 'road', z: 0.00 },
-    { type: 'grass', z: -0.70 }
+    { type: 'grass', z: -0.70 },
+    { type: 'grass', z: -1.40, color: [0.08, 0.45, 0.18] }
 ];
 
 export const scene = {
@@ -16,7 +17,7 @@ export const scene = {
         { position: [-0.70, 0.0, 0.70] },
         { position: [ 0.70, 0.0, 0.70] },
         {
-            position: [-0.20, 0.0, -0.70],
+            position: [-0.20, 0.0, -1.40],
             trunkHeight: 0.52,
             crownColor: [0.85, 0.18, 0.12]
         }
