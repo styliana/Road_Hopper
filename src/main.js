@@ -1,4 +1,5 @@
 import { mat4 } from 'gl-matrix';
+import { updateCars } from './game/gameLogic.js';
 import { rows, scene } from './game/sceneData.js';
 import {
     createProgram, vertexShaderSource, fragmentShaderSource,
@@ -73,6 +74,7 @@ function frame(time) {
         : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
 
+    updateCars(dt);
     render();
     requestAnimationFrame(frame);
 }
