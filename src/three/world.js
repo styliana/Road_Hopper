@@ -9,6 +9,32 @@ const INITIAL_ROWS = rows.length;
 const FIRST_Z = Math.max(...rows.map(row => row.z));
 let nextIndex = INITIAL_ROWS;
 
+// 9 możliwych kolumn ruchu w osi X odpowiadających krokowi gracza (stepX = 0.25)
+export const TREE_LANES = [-1.00, -0.75, -0.50, -0.25, 0.00, 0.25, 0.50, 0.75, 1.00];
+
+export function getRandomTreePositions() {
+    // Zadanie 1: Losowa liczba drzew od 1 do 3
+    const count = Math.floor(Math.random() * 3) + 1;
+    const available = [...TREE_LANES];
+    const positions = [];
+
+    for (let i = 0; i < count; i++) {
+        if (available.length === 0) break;
+        const randIdx = Math.floor(Math.random() * available.length);
+        const chosenX = available[randIdx];
+        positions.push(chosenX);
+
+        // Eliminujemy wybraną pozycję oraz bezpośrednio sąsiadujące pozycje (odległość < 0.40),
+        // co zapobiega powstawaniu ścian i gwarantuje wolne przejścia między drzewami
+        for (let j = available.length - 1; j >= 0; j--) {
+            if (Math.abs(available[j] - chosenX) < 0.40) {
+                available.splice(j, 1);
+            }
+        }
+    }
+    return positions;
+}
+
 export function prepareWorld() {
     rows.sort((a, b) => b.z - a.z);
     rows.forEach((row, index) => {
@@ -23,7 +49,7 @@ function playerLane() {
     return row?.laneIndex ?? 0;
 }
 
-export function extendWorld(scene3D, carTemplate, treeTemplate) {
+export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
     const current = playerLane();
     while (nextIndex <= current + AHEAD) {
         const index = nextIndex++;
@@ -58,13 +84,20 @@ export function extendWorld(scene3D, carTemplate, treeTemplate) {
             gameScene.cars.push(car);
             addCarVisual(scene3D, car, carTemplate);
         } else {
-            const treeX = Math.random() < 0.5 ? -1.05 : 1.05;
-            const tree = {
-                position: [treeX, 0, row.z],
-                laneIndex: index
-            };
-            gameScene.trees.push(tree);
-            addTreeVisual(scene3D, tree, treeTemplate);
+            // Zadanie 1: Generowanie losowej liczby drzew (1 do 3) w różnych częściach pasa
+            const treePositions = getRandomTreePositions();
+            for (const treeX of treePositions) {
+                const template = newTreeTemplate && Math.random() < 0.5
+                    ? newTreeTemplate
+                    : treeTemplate;
+                const tree = {
+                    position: [treeX, 0, row.z],
+                    laneIndex: index,
+                    model: template === newTreeTemplate ? 'drzewko' : 'tree'
+                };
+                gameScene.trees.push(tree);
+                addTreeVisual(scene3D, tree, template);
+            }
         }
     }
 
@@ -96,12 +129,12 @@ function removeGeneratedRow(scene3D, row) {
     rows.splice(rows.indexOf(row), 1);
 }
 
-export function resetWorld(scene3D, carTemplate, treeTemplate) {
+export function resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
     for (const row of [...rows]) {
         if (row.laneIndex >= INITIAL_ROWS) {
             removeGeneratedRow(scene3D, row);
         }
     }
     nextIndex = INITIAL_ROWS;
-    extendWorld(scene3D, carTemplate, treeTemplate);
+    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 }

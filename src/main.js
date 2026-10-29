@@ -129,7 +129,7 @@ createBasicObjects(scene3D, catTemplate);
 addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 
 if (GAME_MODE === 'endless') {
-    extendWorld(scene3D, carTemplate, treeTemplate);
+    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
     resetFollowCamera();
 }
 
@@ -147,7 +147,7 @@ function frame(time) {
         if (GAME_MODE === 'endless' &&
             gameState.lives < livesBefore &&
             gameState.status === 'playing') {
-            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
             resetFollowCamera();
         }
     }
@@ -155,7 +155,7 @@ function frame(time) {
     if (GAME_MODE === 'endless' &&
         !isPaused && gameState.status === 'playing') {
         updateFollowCamera(dt);
-        extendWorld(scene3D, carTemplate, treeTemplate);
+        extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
     }
 
     render();
@@ -178,7 +178,7 @@ window.addEventListener('keydown', event => {
         restartGame();
         orientPlayer('ArrowUp');
         if (GAME_MODE === 'endless') {
-            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
             resetFollowCamera();
         }
         isPaused = false;
