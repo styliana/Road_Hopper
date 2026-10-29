@@ -59,9 +59,10 @@ export function updateGameState() {
         return;
     }
 
-    const lane = lanes.findIndex(z =>
-        Math.abs(z - scene.player.position[2]) < 0.001
+    const row = rows.find(r =>
+        Math.abs(r.z - scene.player.position[2]) < 0.001
     );
+    const lane = row?.laneIndex ?? -1;
 
     if (lane > gameState.bestLane) {
         gameState.score += (lane - gameState.bestLane) * 10;
@@ -77,7 +78,7 @@ export function updateGameState() {
 
 export function restartGame() {
     scene.player.position.splice(0, 3, ...startPlayer);
-    scene.cars.forEach((car, index) => {
+    scene.cars.slice(0, startCars.length).forEach((car, index) => {
         car.position.splice(0, 3, ...startCars[index]);
         car.speed = startSpeeds[index];
     });

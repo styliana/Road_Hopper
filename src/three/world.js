@@ -93,3 +93,13 @@ function removeGeneratedRow(scene3D, row) {
     objects.rows.delete(row.laneIndex);
     rows.splice(rows.indexOf(row), 1);
 }
+
+export function resetWorld(scene3D, carTemplate, treeTemplate) {
+    for (const row of [...rows]) {
+        if (row.laneIndex >= INITIAL_ROWS) {
+            removeGeneratedRow(scene3D, row);
+        }
+    }
+    nextIndex = INITIAL_ROWS;
+    extendWorld(scene3D, carTemplate, treeTemplate);
+}

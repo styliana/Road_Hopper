@@ -9,7 +9,7 @@ import {
     addModels, createBasicObjects, orientPlayer, syncObjects
 } from './three/objects.js';
 import {
-    prepareWorld, extendWorld
+    prepareWorld, extendWorld, resetWorld
 } from './three/world.js';
 
 const GAME_MODE = 'endless';
@@ -45,6 +45,13 @@ function updateFollowCamera(dt) {
     const wantedTarget = new THREE.Vector3(p[0] * 0.25, -0.3, p[2] - 1.05);
     camera3D.position.lerp(wantedPosition, alpha);
     cameraTarget.lerp(wantedTarget, alpha);
+    camera3D.lookAt(cameraTarget);
+}
+
+function resetFollowCamera() {
+    const p = scene.player.position;
+    camera3D.position.set(p[0] * 0.25 + 2.0, 3, p[2] + 2.5);
+    cameraTarget.set(p[0] * 0.25, -0.3, p[2] - 1.05);
     camera3D.lookAt(cameraTarget);
 }
 
@@ -123,6 +130,7 @@ addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 
 if (GAME_MODE === 'endless') {
     extendWorld(scene3D, carTemplate, treeTemplate);
+    resetFollowCamera();
 }
 
 let previousTime = null;
@@ -133,8 +141,15 @@ function frame(time) {
     previousTime = time;
 
     if (!isPaused && gameState.status === 'playing') {
+        const livesBefore = gameState.lives;
         updateCars(dt);
         updateGameState();
+        if (GAME_MODE === 'endless' &&
+            gameState.lives < livesBefore &&
+            gameState.status === 'playing') {
+            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetFollowCamera();
+        }
     }
 
     if (GAME_MODE === 'endless' &&
@@ -158,11 +173,16 @@ window.addEventListener('keydown', event => {
     }
 
     // Restart klawiszem R
-    if (event.key.toLowerCase() === 'r') {
-        if (!event.repeat) {
-            restartGame();
-            orientPlayer('ArrowUp');
+    if (event.code === 'KeyR' || event.key.toLowerCase() === 'r') {
+        if (event.repeat) return;
+        restartGame();
+        orientPlayer('ArrowUp');
+        if (GAME_MODE === 'endless') {
+            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetFollowCamera();
         }
+        isPaused = false;
+        previousTime = null;
         return;
     }
 
