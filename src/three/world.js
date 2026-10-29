@@ -35,6 +35,25 @@ export function getRandomTreePositions() {
     return positions;
 }
 
+// Zadanie 2: Generowanie początkowych pozycji od 1 do 3 aut z bezpiecznym odstępem
+export function generateCarPositions(count) {
+    if (count === 1) {
+        return [Math.random() * 2.0 - 1.0];
+    }
+    if (count === 2) {
+        return [
+            -1.10 + Math.random() * 0.65, // [-1.10, -0.45]
+             0.45 + Math.random() * 0.65  // [ 0.45,  1.10]
+        ];
+    }
+    // count === 3
+    return [
+        -1.25 + Math.random() * 0.35, // [-1.25, -0.90]
+        -0.18 + Math.random() * 0.36, // [-0.18,  0.18]
+         0.90 + Math.random() * 0.35  // [ 0.90,  1.25]
+    ];
+}
+
 export function prepareWorld() {
     rows.sort((a, b) => b.z - a.z);
     rows.forEach((row, index) => {
@@ -72,17 +91,23 @@ export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate)
         addRowVisual(scene3D, row);
 
         if (type === 'road') {
+            // Zadanie 2: Od 1 do 3 pojazdów na pasie ze wspólnym kierunkiem i zróżnicowanymi prędkościami
+            const carCount = Math.floor(Math.random() * 3) + 1;
             const direction = Math.random() < 0.5 ? -1 : 1;
-            const baseSpeed = direction * (0.28 + Math.random() * 0.20);
-            const carX = Math.random() * 2.0 - 1.0;
-            const car = {
-                position: [carX, 0, row.z],
-                speed: baseSpeed * gameState.speedMultiplier,
-                baseSpeed,
-                laneIndex: index
-            };
-            gameScene.cars.push(car);
-            addCarVisual(scene3D, car, carTemplate);
+            const carPositions = generateCarPositions(carCount);
+
+            for (const carX of carPositions) {
+                const speedVariation = 0.24 + Math.random() * 0.22;
+                const baseSpeed = direction * speedVariation;
+                const car = {
+                    position: [carX, 0, row.z],
+                    speed: baseSpeed * gameState.speedMultiplier,
+                    baseSpeed,
+                    laneIndex: index
+                };
+                gameScene.cars.push(car);
+                addCarVisual(scene3D, car, carTemplate);
+            }
         } else {
             // Zadanie 1: Generowanie losowej liczby drzew (1 do 3) w różnych częściach pasa
             const treePositions = getRandomTreePositions();
