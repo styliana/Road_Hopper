@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { scene } from './game/sceneData.js';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import {
     gameState, updateGameState, restartGame
@@ -7,6 +8,8 @@ import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
     addModels, createBasicObjects, orientPlayer, syncObjects
 } from './three/objects.js';
+
+const GAME_MODE = 'endless';
 
 const canvas = document.querySelector('#gameCanvas');
 const scoreLabel = document.querySelector('#score');
@@ -24,12 +27,23 @@ renderer3D.outputColorSpace = THREE.SRGBColorSpace;
 
 const camera3D = new THREE.OrthographicCamera(-3, 3, 2.2, -2.2, 0.1, 100);
 camera3D.position.set(0, 2.4, 3.2);
-camera3D.lookAt(0, -0.2, -0.35);
+const cameraTarget = new THREE.Vector3(0, -0.3, scene.player.position[2] - 1.05);
+camera3D.lookAt(cameraTarget);
 
 scene3D.add(new THREE.AmbientLight(0xffffff, 1.5));
 const light = new THREE.DirectionalLight(0xffffff, 2.0);
 light.position.set(-2, 5, 4);
 scene3D.add(light);
+
+function updateFollowCamera(dt) {
+    const p = scene.player.position;
+    const alpha = 1 - Math.exp(-5 * dt);
+    const wantedPosition = new THREE.Vector3(p[0] * 0.25 + 2.0, 3, p[2] + 2.5);
+    const wantedTarget = new THREE.Vector3(p[0] * 0.25, -0.3, p[2] - 1.05);
+    camera3D.position.lerp(wantedPosition, alpha);
+    cameraTarget.lerp(wantedTarget, alpha);
+    camera3D.lookAt(cameraTarget);
+}
 
 function render() {
     const width = Math.max(1, canvas.clientWidth);
@@ -100,8 +114,6 @@ addModels(scene3D, ratTemplate, treeTemplate, newTreeTemplate);
 
 let previousTime = null;
 function frame(time) {
-    // Obliczanie dt i aktualizowanie previousTime nawet podczas pauzy,
-    // aby po wznowieniu gry nie nastąpił nagły przeskok obiektów.
     const dt = previousTime === null
         ? 0
         : Math.min((time - previousTime) / 1000, 0.05);
@@ -110,6 +122,11 @@ function frame(time) {
     if (!isPaused && gameState.status === 'playing') {
         updateCars(dt);
         updateGameState();
+    }
+
+    if (GAME_MODE === 'endless' &&
+        !isPaused && gameState.status === 'playing') {
+        updateFollowCamera(dt);
     }
 
     render();
