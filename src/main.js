@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene } from './game/sceneData.js';
+import { rows, scene } from './game/sceneData.js';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import {
     gameState, updateGameState, restartGame
@@ -19,6 +19,8 @@ const scoreLabel = document.querySelector('#score');
 const bestScoreLabel = document.querySelector('#bestScore');
 const speedLabel = document.querySelector('#speed');
 const livesLabel = document.querySelector('#lives');
+const activeRowsLabel = document.querySelector('#activeRows');
+const activeCarsLabel = document.querySelector('#activeCars');
 const statusLabel = document.querySelector('#status');
 
 const scene3D = new THREE.Scene();
@@ -82,6 +84,12 @@ function updateHud() {
     if (livesLabel) {
         const hearts = '❤️'.repeat(Math.max(0, gameState.lives)) || '💀';
         livesLabel.textContent = `Życia: ${hearts} (${gameState.lives}/${gameState.maxLives})`;
+    }
+    if (activeRowsLabel) {
+        activeRowsLabel.textContent = `Aktywne pasy: ${rows.length}`;
+    }
+    if (activeCarsLabel) {
+        activeCarsLabel.textContent = `Aktywne auta: ${scene.cars.length}`;
     }
     if (gameState.status === 'lost') {
         statusLabel.textContent = 'Koniec gry! Brak żyć. Naciśnij R.';
