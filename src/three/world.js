@@ -1,10 +1,10 @@
 import { rows, scene as gameScene } from '../game/sceneData.js';
-import { addRowVisual, addCarVisual, addTreeVisual, objects } from './objects.js';
+import { addRowVisual, addCarVisual, addTreeVisual, objects, BOARD_WIDTH } from './objects.js';
 import { gameState } from '../game/gameRules.js';
 
 const STEP = 0.35;
-const AHEAD = 5;
-const BEHIND = 3;
+const AHEAD = 8;
+const BEHIND = 4;
 const INITIAL_ROWS = rows.length;
 const FIRST_Z = Math.max(...rows.map(row => row.z));
 let nextIndex = INITIAL_ROWS;
@@ -48,8 +48,9 @@ export function extendWorld(scene3D, carTemplate, treeTemplate) {
         if (type === 'road') {
             const direction = Math.random() < 0.5 ? -1 : 1;
             const baseSpeed = direction * (0.28 + Math.random() * 0.20);
+            const carX = Math.random() * 2.0 - 1.0;
             const car = {
-                position: [Math.random() * 1.6 - 0.8, 0, row.z],
+                position: [carX, 0, row.z],
                 speed: baseSpeed * gameState.speedMultiplier,
                 baseSpeed,
                 laneIndex: index
@@ -57,8 +58,9 @@ export function extendWorld(scene3D, carTemplate, treeTemplate) {
             gameScene.cars.push(car);
             addCarVisual(scene3D, car, carTemplate);
         } else {
+            const treeX = Math.random() < 0.5 ? -1.05 : 1.05;
             const tree = {
-                position: [Math.random() < 0.5 ? -0.65 : 0.65, 0, row.z],
+                position: [treeX, 0, row.z],
                 laneIndex: index
             };
             gameScene.trees.push(tree);

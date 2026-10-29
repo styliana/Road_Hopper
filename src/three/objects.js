@@ -3,6 +3,7 @@ import { rows, scene as gameScene } from '../game/sceneData.js';
 import { makeInstance } from './modelLoader.js';
 
 export const GROUND_Y = -0.45;
+export const BOARD_WIDTH = 2.8;
 
 export const objects = {
     playerRoot: null,
@@ -18,7 +19,7 @@ const playerRotations = {
     ArrowRight: Math.PI / 2
 };
 
-const rowGeometry = new THREE.BoxGeometry(1.8, 0.04, 0.35);
+const rowGeometry = new THREE.BoxGeometry(BOARD_WIDTH, 0.04, 0.35);
 const rowMaterials = {
     road: new THREE.MeshBasicMaterial({ color: 0x30323a }),
     grass: new THREE.MeshBasicMaterial({ color: 0x2ba344 }),
@@ -36,7 +37,7 @@ export function addRowVisual(scene3D, row) {
     if (row.type === 'road' && previous?.type === 'road' &&
         Math.abs(previous.z - row.z - 0.35) < 0.001) {
         const lineZ = (previous.z + row.z) / 2;
-        for (let x = -0.75; x <= 0.75; x += 0.30) {
+        for (let x = -1.05; x <= 1.06; x += 0.30) {
             const line = new THREE.Mesh(lineGeometry, lineMaterial);
             line.position.set(x, GROUND_Y + 0.003, lineZ);
             root.add(line);

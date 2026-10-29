@@ -60,7 +60,7 @@ function render() {
     const height = Math.max(1, canvas.clientHeight);
     renderer3D.setSize(width, height, false);
 
-    const zoom = 2.2;
+    const zoom = 1.65;
     const aspect = width / height;
     camera3D.left = -zoom * aspect;
     camera3D.right = zoom * aspect;

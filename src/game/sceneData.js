@@ -17,9 +17,9 @@ export const scene = {
         { position: [-0.85, 0.0, 0.00], color: [0.85, 0.20, 0.75], speed: -0.45 }
     ],
     trees: [
-        { position: [-0.65, 0.0, 0.70], model: 'tree' },
-        { position: [ 0.65, 0.0, 0.70], model: 'drzewko' },
-        { position: [-0.65, 0.0, -0.35], model: 'drzewko' },
-        { position: [ 0.65, 0.0, -0.35], model: 'tree' }
+        { position: [-1.05, 0.0, 0.70], model: 'tree' },
+        { position: [ 1.05, 0.0, 0.70], model: 'drzewko' },
+        { position: [-1.05, 0.0, -0.35], model: 'drzewko' },
+        { position: [ 1.05, 0.0, -0.35], model: 'tree' }
     ]
 };
