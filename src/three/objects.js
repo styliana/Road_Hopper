@@ -7,7 +7,8 @@ export const GROUND_Y = -0.45;
 export const objects = {
     playerRoot: null,
     cars: [],
-    trees: []
+    trees: [],
+    rows: new Map(),
 };
 
 const playerRotations = {
@@ -17,32 +18,37 @@ const playerRotations = {
     ArrowRight: Math.PI / 2
 };
 
-export function createBasicObjects(scene3D, catTemplate) {
-    const rowGeometry = new THREE.BoxGeometry(3.2, 0.04, 0.68);
-    const rowMaterials = new Map();
+const rowGeometry = new THREE.BoxGeometry(1.8, 0.04, 0.35);
+const rowMaterials = {
+    road: new THREE.MeshBasicMaterial({ color: 0x30323a }),
+    grass: new THREE.MeshBasicMaterial({ color: 0x2ba344 }),
+};
+const lineGeometry = new THREE.BoxGeometry(0.15, 0.006, 0.018);
+const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-    for (const row of rows) {
-        const color = row.color
-            ? new THREE.Color().setRGB(...row.color, THREE.SRGBColorSpace)
-            : new THREE.Color(row.type === 'road' ? 0x30323a : 0x2ba344);
-        const colorKey = color.getHex();
-        let material = rowMaterials.get(colorKey);
-        if (!material) {
-            material = new THREE.MeshBasicMaterial({ color });
-            rowMaterials.set(colorKey, material);
+export function addRowVisual(scene3D, row) {
+    const root = new THREE.Group();
+    const mesh = new THREE.Mesh(rowGeometry, rowMaterials[row.type]);
+    mesh.position.set(0, GROUND_Y - 0.02, row.z);
+    root.add(mesh);
+
+    const previous = rows.find(r => r.laneIndex === row.laneIndex - 1);
+    if (row.type === 'road' && previous?.type === 'road' &&
+        Math.abs(previous.z - row.z - 0.35) < 0.001) {
+        const lineZ = (previous.z + row.z) / 2;
+        for (let x = -0.75; x <= 0.75; x += 0.30) {
+            const line = new THREE.Mesh(lineGeometry, lineMaterial);
+            line.position.set(x, GROUND_Y + 0.003, lineZ);
+            root.add(line);
         }
-
-        const rowMesh = new THREE.Mesh(rowGeometry, material);
-        rowMesh.position.set(0, GROUND_Y - 0.02, row.z);
-        scene3D.add(rowMesh);
     }
+    scene3D.add(root);
+    objects.rows.set(row.laneIndex, root);
+}
 
-    const markingMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const markingGeometry = new THREE.BoxGeometry(0.14, 0.01, 0.03);
-    for (let x = -1.35; x <= 1.35; x += 0.30) {
-        const marking = new THREE.Mesh(markingGeometry, markingMaterial);
-        marking.position.set(x, GROUND_Y + 0.005, -0.35);
-        scene3D.add(marking);
+export function createBasicObjects(scene3D, catTemplate) {
+    for (const row of rows) {
+        addRowVisual(scene3D, row);
     }
 
     const playerRoot = makeInstance(catTemplate, 0.37);
@@ -61,21 +67,29 @@ export function orientPlayer(key) {
     objects.playerRoot.rotation.y = rotation;
 }
 
+export function addCarVisual(scene3D, car, carTemplate) {
+    const root = makeInstance(carTemplate, 0.40);
+    root.rotation.y = car.speed < 0 ? Math.PI / 2 : -Math.PI / 2;
+    scene3D.add(root);
+    objects.cars.push(root);
+}
+
+export function addTreeVisual(scene3D, tree, treeTemplate) {
+    const root = makeInstance(treeTemplate, 0.70);
+    scene3D.add(root);
+    objects.trees.push(root);
+}
+
 export function addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
     for (const car of gameScene.cars) {
-        const root = makeInstance(carTemplate, 0.44);
-        root.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2;
-        scene3D.add(root);
-        objects.cars.push(root);
+        addCarVisual(scene3D, car, carTemplate);
     }
 
     for (const tree of gameScene.trees) {
-        const template = tree.model === 'drzewko'
+        const template = tree.model === 'drzewko' && newTreeTemplate
             ? newTreeTemplate
             : treeTemplate;
-        const root = makeInstance(template, 0.70);
-        scene3D.add(root);
-        objects.trees.push(root);
+        addTreeVisual(scene3D, tree, template);
     }
 }
 
@@ -91,7 +105,7 @@ export function syncObjects() {
 
     gameScene.cars.forEach((car, index) => {
         const root = objects.cars[index];
-        if (!root) throw new Error(`Brak modelu Three.js dla samochodu ${index}`);
+        if (!root) return;
 
         const position = car.position;
         root.position.set(
@@ -101,7 +115,7 @@ export function syncObjects() {
 
     gameScene.trees.forEach((tree, index) => {
         const root = objects.trees[index];
-        if (!root) throw new Error(`Brak modelu Three.js dla drzewa ${index}`);
+        if (!root) return;
 
         const position = tree.position;
         root.position.set(

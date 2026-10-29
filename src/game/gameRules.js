@@ -12,17 +12,22 @@ export const gameState = {
 
 const startPlayer = [...scene.player.position];
 const startCars = scene.cars.map(car => [...car.position]);
-const startCarSpeeds = scene.cars.map(car => car.speed);
+const startSpeeds = scene.cars.map(car => car.speed);
+const startCarSpeeds = startSpeeds;
 const lanes = rows.map(row => row.z).sort((a, b) => b - a);
 
 export function applySpeedIncrease() {
     // Każde 10 punktów zwiększa prędkość aut o 25% (kierunek/znak prędkości zostaje zachowany)
-    const multiplier = 1 + (gameState.score * 0.025);
-    gameState.speedMultiplier = multiplier;
+    const factor = 1 + (gameState.score * 0.025);
+    gameState.speedMultiplier = factor;
     scene.cars.forEach((car, index) => {
-        car.speed = startCarSpeeds[index] * multiplier;
+        const baseSpeed = index < startSpeeds.length
+            ? startSpeeds[index]
+            : car.baseSpeed;
+        car.speed = baseSpeed * factor;
     });
 }
+export const updateDifficulty = applySpeedIncrease;
 
 export function checkCollision() {
     const player = scene.player.position;
@@ -68,18 +73,13 @@ export function updateGameState() {
         // Zadanie 2: Stopniowe zwiększanie prędkości aut wraz z punktami
         applySpeedIncrease();
     }
-
-    if (lane === lanes.length - 1) {
-        gameState.status = 'won';
-    }
 }
 
 export function restartGame() {
     scene.player.position.splice(0, 3, ...startPlayer);
     scene.cars.forEach((car, index) => {
         car.position.splice(0, 3, ...startCars[index]);
-        // Zadanie 2: Przywrócenie prędkości początkowych
-        car.speed = startCarSpeeds[index];
+        car.speed = startSpeeds[index];
     });
     gameState.status = 'playing';
     gameState.score = 0;

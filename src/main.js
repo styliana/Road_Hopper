@@ -8,6 +8,9 @@ import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
     addModels, createBasicObjects, orientPlayer, syncObjects
 } from './three/objects.js';
+import {
+    prepareWorld, extendWorld
+} from './three/world.js';
 
 const GAME_MODE = 'endless';
 
@@ -78,7 +81,9 @@ function updateHud() {
     } else if (gameState.status === 'won') {
         statusLabel.textContent = 'Meta! Naciśnij R.';
     } else {
-        statusLabel.textContent = 'Dotrzyj do ostatniego pasa trawy.';
+        statusLabel.textContent = GAME_MODE === 'endless'
+            ? 'Tryb Endless: idź przed siebie i unikaj przeszkód!'
+            : 'Dotrzyj do ostatniego pasa trawy.';
     }
 }
 
@@ -105,12 +110,20 @@ const [ratTemplate, treeTemplate, newTreeTemplate, catTemplate] = await Promise.
     loadTemplate('/models/drzewko.glb'),
     loadTemplate('/models/kociak.glb')
 ]);
+const carTemplate = ratTemplate;
+
 console.log('Szczur:', countTriangles(ratTemplate));
 console.log('Drzewo:', countTriangles(treeTemplate));
 console.log('Drzewko:', countTriangles(newTreeTemplate));
 console.log('Kociak:', countTriangles(catTemplate));
+
+prepareWorld();
 createBasicObjects(scene3D, catTemplate);
-addModels(scene3D, ratTemplate, treeTemplate, newTreeTemplate);
+addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+
+if (GAME_MODE === 'endless') {
+    extendWorld(scene3D, carTemplate, treeTemplate);
+}
 
 let previousTime = null;
 function frame(time) {
@@ -127,6 +140,7 @@ function frame(time) {
     if (GAME_MODE === 'endless' &&
         !isPaused && gameState.status === 'playing') {
         updateFollowCamera(dt);
+        extendWorld(scene3D, carTemplate, treeTemplate);
     }
 
     render();

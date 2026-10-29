@@ -1,5 +1,7 @@
 import { rows, scene } from './sceneData.js';
 
+const STEP = 0.35;
+
 export function updateCars(dt) {
     const edge = 1.70;
     for (const car of scene.cars) {
@@ -24,9 +26,15 @@ export function movePlayer(key) {
     const lanes = rows.map(row => row.z).sort((a, b) => b - a);
     const index = lanes.findIndex(z => Math.abs(z - p[2]) < 0.001);
     if (key === 'ArrowUp' && index >= 0 && index < lanes.length - 1) {
-        p[2] = lanes[index + 1];
+        const nextZ = lanes[index + 1];
+        if (Math.abs(nextZ - p[2]) <= STEP + 0.001) {
+            p[2] = nextZ;
+        }
     }
     if (key === 'ArrowDown' && index > 0) {
-        p[2] = lanes[index - 1];
+        const nextZ = lanes[index - 1];
+        if (Math.abs(nextZ - p[2]) <= STEP + 0.001) {
+            p[2] = nextZ;
+        }
     }
 }
