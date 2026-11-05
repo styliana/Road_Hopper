@@ -27,6 +27,7 @@ let jumpStartZ = 0;
 let jumpOffsetX = 0;
 let jumpOffsetZ = 0;
 let jumpHeight = 0;
+const collisionDustEffects = [];
 
 const rowGeometry = new THREE.BoxGeometry(BOARD_WIDTH, 0.04, 0.35);
 const rowMaterials = {
@@ -119,6 +120,75 @@ export function updatePlayerAnimation(dt) {
     jumpOffsetX = THREE.MathUtils.lerp(jumpStartX, 0, progress);
     jumpOffsetZ = THREE.MathUtils.lerp(jumpStartZ, 0, progress);
     jumpHeight = Math.sin(progress * Math.PI) * 0.12;
+}
+
+export function createCollisionDust(scene3D, position) {
+    const particleCount = 280;
+    const duration = 1.1;
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+        const index = i * 3;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.7 + Math.random() * 1.0;
+
+        positions[index] = position[0] + (Math.random() - 0.5) * 0.32;
+        positions[index + 1] = GROUND_Y + position[1] + 0.08;
+        positions[index + 2] = position[2] + (Math.random() - 0.5) * 0.32;
+        velocities[index] = Math.cos(angle) * speed;
+        velocities[index + 1] = 0.55 + Math.random() * 0.8;
+        velocities[index + 2] = Math.sin(angle) * speed;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(positions, 3)
+    );
+    const material = new THREE.PointsMaterial({
+        color: 0xffe1a3,
+        size: 0.4,
+        transparent: true,
+        opacity: 1,
+        depthWrite: false,
+        sizeAttenuation: true
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene3D.add(particles);
+    collisionDustEffects.push({
+        particles,
+        velocities,
+        age: 0,
+        duration
+    });
+}
+
+export function updateCollisionDust(scene3D, dt) {
+    for (let i = collisionDustEffects.length - 1; i >= 0; i--) {
+        const effect = collisionDustEffects[i];
+        effect.age += dt;
+        if (effect.age >= effect.duration) {
+            scene3D.remove(effect.particles);
+            effect.particles.geometry.dispose();
+            effect.particles.material.dispose();
+            collisionDustEffects.splice(i, 1);
+            continue;
+        }
+
+        const progress = effect.age / effect.duration;
+        const positions = effect.particles.geometry.attributes.position;
+        for (let particle = 0; particle < positions.count; particle++) {
+            const index = particle * 3;
+            effect.velocities[index + 1] -= 0.8 * dt;
+            positions.array[index] += effect.velocities[index] * dt;
+            positions.array[index + 1] += effect.velocities[index + 1] * dt;
+            positions.array[index + 2] += effect.velocities[index + 2] * dt;
+        }
+        positions.needsUpdate = true;
+        effect.particles.material.opacity = 1 - progress;
+        effect.particles.material.size = 0.4 + progress * 0.18;
+    }
 }
 
 export function addCarVisual(scene3D, car, carTemplate) {

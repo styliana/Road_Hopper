@@ -6,7 +6,8 @@ import {
 } from './game/gameRules.js';
 import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
-    addModels, createBasicObjects, orientPlayer, syncObjects
+    addModels, createBasicObjects, createCollisionDust, orientPlayer,
+    syncObjects, updateCollisionDust
 } from './three/objects.js';
 import {
     prepareWorld, extendWorld, resetWorld
@@ -142,14 +143,25 @@ function frame(time) {
 
     if (!isPaused && gameState.status === 'playing') {
         const livesBefore = gameState.lives;
+        const collisionPosition = [...scene.player.position];
         updateCars(dt);
         updateGameState();
+        if (gameState.lives < livesBefore) {
+            const dustPosition = gameState.status === 'playing'
+                ? scene.player.position
+                : collisionPosition;
+            createCollisionDust(scene3D, dustPosition);
+        }
         if (GAME_MODE === 'endless' &&
             gameState.lives < livesBefore &&
             gameState.status === 'playing') {
             resetWorld(scene3D, carTemplate, treeTemplate);
             resetFollowCamera();
         }
+    }
+
+    if (!isPaused) {
+        updateCollisionDust(scene3D, dt);
     }
 
     if (GAME_MODE === 'endless' &&
