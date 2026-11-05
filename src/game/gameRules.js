@@ -1,7 +1,7 @@
 import { rows, scene } from './sceneData.js';
 
 export const gameState = {
-    status: 'playing', // 'playing', 'lost' lub 'won'
+    status: 'playing', // 'playing', 'gameOver', 'lost' lub 'won'
     score: 0,
     bestScore: 0,      // Zadanie 3: licznik najlepszego wyniku (High Score)
     bestLane: 0,
@@ -49,12 +49,11 @@ export function updateGameState() {
 
     if (checkCollision()) {
         gameState.lives -= 1;
-        // Przeniesienie gracza na pole startowe po kolizji
-        scene.player.position.splice(0, 3, ...startPlayer);
 
-        // Przegrana następuje dopiero po utracie wszystkich żyć
         if (gameState.lives <= 0) {
-            gameState.status = 'lost';
+            gameState.status = 'gameOver';
+        } else {
+            scene.player.position.splice(0, 3, ...startPlayer);
         }
         return;
     }

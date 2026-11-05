@@ -27,7 +27,8 @@ let jumpStartZ = 0;
 let jumpOffsetX = 0;
 let jumpOffsetZ = 0;
 let jumpHeight = 0;
-const collisionDustEffects = [];
+const particleEffects = [];
+const shockwaveEffects = [];
 
 const rowGeometry = new THREE.BoxGeometry(BOARD_WIDTH, 0.04, 0.35);
 const rowMaterials = {
@@ -122,23 +123,36 @@ export function updatePlayerAnimation(dt) {
     jumpHeight = Math.sin(progress * Math.PI) * 0.12;
 }
 
-export function createCollisionDust(scene3D, position) {
-    const particleCount = 280;
-    const duration = 1.1;
+function createParticleBurst(scene3D, position, {
+    particleCount,
+    duration,
+    color,
+    size,
+    sizeGrowth,
+    delay = 0,
+    opacity = 1,
+    blending = THREE.AdditiveBlending,
+    spread,
+    speed,
+    upwardSpeed,
+    gravity,
+    heightOffset
+}) {
     const positions = new Float32Array(particleCount * 3);
     const velocities = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
         const index = i * 3;
         const angle = Math.random() * Math.PI * 2;
-        const speed = 0.7 + Math.random() * 1.0;
+        const particleSpeed = speed[0] + Math.random() * (speed[1] - speed[0]);
 
-        positions[index] = position[0] + (Math.random() - 0.5) * 0.32;
-        positions[index + 1] = GROUND_Y + position[1] + 0.08;
-        positions[index + 2] = position[2] + (Math.random() - 0.5) * 0.32;
-        velocities[index] = Math.cos(angle) * speed;
-        velocities[index + 1] = 0.55 + Math.random() * 0.8;
-        velocities[index + 2] = Math.sin(angle) * speed;
+        positions[index] = position[0] + (Math.random() - 0.5) * spread;
+        positions[index + 1] = GROUND_Y + position[1] + heightOffset;
+        positions[index + 2] = position[2] + (Math.random() - 0.5) * spread;
+        velocities[index] = Math.cos(angle) * particleSpeed;
+        velocities[index + 1] = upwardSpeed[0] +
+            Math.random() * (upwardSpeed[1] - upwardSpeed[0]);
+        velocities[index + 2] = Math.sin(angle) * particleSpeed;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -147,47 +161,218 @@ export function createCollisionDust(scene3D, position) {
         new THREE.Float32BufferAttribute(positions, 3)
     );
     const material = new THREE.PointsMaterial({
-        color: 0xffe1a3,
-        size: 0.4,
+        color,
+        size,
         transparent: true,
-        opacity: 1,
+        opacity,
         depthWrite: false,
-        sizeAttenuation: true
+        depthTest: false,
+        blending,
+        sizeAttenuation: false
     });
     const particles = new THREE.Points(geometry, material);
+    particles.frustumCulled = false;
     scene3D.add(particles);
-    collisionDustEffects.push({
+    particleEffects.push({
         particles,
         velocities,
         age: 0,
-        duration
+        duration,
+        delay,
+        gravity,
+        size,
+        sizeGrowth,
+        opacity
     });
 }
 
-export function updateCollisionDust(scene3D, dt) {
-    for (let i = collisionDustEffects.length - 1; i >= 0; i--) {
-        const effect = collisionDustEffects[i];
+export function createCollisionDust(scene3D, position) {
+    createParticleBurst(scene3D, position, {
+        particleCount: 280,
+        duration: 1.1,
+        color: 0xffe1a3,
+        size: 6,
+        sizeGrowth: 5,
+        spread: 0.32,
+        speed: [0.7, 1.7],
+        upwardSpeed: [0.55, 1.35],
+        gravity: 0.8,
+        heightOffset: 0.08
+    });
+}
+
+export function createPlayerExplosion(scene3D, position) {
+    if (!objects.playerRoot) {
+        throw new Error('Obiekt gracza Three.js nie został utworzony');
+    }
+
+    objects.playerRoot.visible = false;
+    createParticleBurst(scene3D, position, {
+        particleCount: 120,
+        duration: 0.9,
+        color: 0xfff8d6,
+        size: 15,
+        sizeGrowth: 12,
+        spread: 0.18,
+        speed: [0.2, 1.0],
+        upwardSpeed: [0.2, 1.2],
+        gravity: 1.2,
+        heightOffset: 0.3
+    });
+    createParticleBurst(scene3D, position, {
+        particleCount: 360,
+        duration: 3.2,
+        delay: 0.03,
+        color: 0xff4b1f,
+        size: 12,
+        sizeGrowth: 18,
+        spread: 0.48,
+        speed: [1.0, 3.8],
+        upwardSpeed: [1.4, 4.2],
+        gravity: 2.4,
+        heightOffset: 0.3
+    });
+    createParticleBurst(scene3D, position, {
+        particleCount: 220,
+        duration: 2.6,
+        delay: 0.08,
+        color: 0xffd54f,
+        size: 8,
+        sizeGrowth: 9,
+        spread: 0.28,
+        speed: [1.4, 4.2],
+        upwardSpeed: [1.0, 3.6],
+        gravity: 3.0,
+        heightOffset: 0.35
+    });
+    createParticleBurst(scene3D, position, {
+        particleCount: 100,
+        duration: 2.2,
+        delay: 0.12,
+        color: 0xd92d45,
+        size: 5,
+        sizeGrowth: 4,
+        spread: 0.32,
+        speed: [1.8, 4.8],
+        upwardSpeed: [0.8, 2.5],
+        gravity: 2.6,
+        heightOffset: 0.25
+    });
+
+    const center = new THREE.Vector3(
+        position[0],
+        GROUND_Y + position[1] + 0.3,
+        position[2]
+    );
+    const core = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 16, 12),
+        new THREE.MeshBasicMaterial({
+            color: 0xfff3be,
+            transparent: true,
+            opacity: 1,
+            depthTest: false,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        })
+    );
+    core.position.copy(center);
+    core.scale.setScalar(0.03);
+    scene3D.add(core);
+    shockwaveEffects.push({
+        object: core,
+        age: 0,
+        delay: 0,
+        duration: 0.48,
+        startScale: 0.03,
+        endScale: 0.9
+    });
+
+    for (const [color, delay, duration, endScale] of [
+        [0xfff0a1, 0.02, 1.0, 4.2],
+        [0xff8a35, 0.14, 1.25, 5.2],
+        [0xff392f, 0.28, 1.4, 6.0]
+    ]) {
+        const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(0.3, 0.035, 8, 48),
+            new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.95,
+                depthTest: false,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        ring.position.set(position[0], GROUND_Y + position[1] + 0.06, position[2]);
+        ring.rotation.x = -Math.PI / 2;
+        ring.scale.setScalar(0.08);
+        scene3D.add(ring);
+        shockwaveEffects.push({
+            object: ring,
+            age: 0,
+            delay,
+            duration,
+            startScale: 0.08,
+            endScale
+        });
+    }
+}
+
+export function resetPlayerVisual() {
+    if (!objects.playerRoot) {
+        throw new Error('Obiekt gracza Three.js nie został utworzony');
+    }
+    objects.playerRoot.visible = true;
+}
+
+export function updateParticleEffects(scene3D, dt) {
+    for (let i = particleEffects.length - 1; i >= 0; i--) {
+        const effect = particleEffects[i];
         effect.age += dt;
-        if (effect.age >= effect.duration) {
+        if (effect.age < effect.delay) continue;
+        if (effect.age >= effect.delay + effect.duration) {
             scene3D.remove(effect.particles);
             effect.particles.geometry.dispose();
             effect.particles.material.dispose();
-            collisionDustEffects.splice(i, 1);
+            particleEffects.splice(i, 1);
             continue;
         }
 
-        const progress = effect.age / effect.duration;
+        const progress = (effect.age - effect.delay) / effect.duration;
         const positions = effect.particles.geometry.attributes.position;
         for (let particle = 0; particle < positions.count; particle++) {
             const index = particle * 3;
-            effect.velocities[index + 1] -= 0.8 * dt;
+            effect.velocities[index + 1] -= effect.gravity * dt;
             positions.array[index] += effect.velocities[index] * dt;
             positions.array[index + 1] += effect.velocities[index + 1] * dt;
             positions.array[index + 2] += effect.velocities[index + 2] * dt;
         }
         positions.needsUpdate = true;
-        effect.particles.material.opacity = 1 - progress;
-        effect.particles.material.size = 0.4 + progress * 0.18;
+        effect.particles.material.opacity = effect.opacity * (1 - progress);
+        effect.particles.material.size =
+            effect.size + progress * effect.sizeGrowth;
+    }
+
+    for (let i = shockwaveEffects.length - 1; i >= 0; i--) {
+        const effect = shockwaveEffects[i];
+        effect.age += dt;
+        if (effect.age < effect.delay) continue;
+        if (effect.age >= effect.delay + effect.duration) {
+            scene3D.remove(effect.object);
+            effect.object.geometry.dispose();
+            effect.object.material.dispose();
+            shockwaveEffects.splice(i, 1);
+            continue;
+        }
+
+        const progress = (effect.age - effect.delay) / effect.duration;
+        const scale = THREE.MathUtils.lerp(
+            effect.startScale,
+            effect.endScale,
+            progress
+        );
+        effect.object.scale.setScalar(scale);
+        effect.object.material.opacity = (1 - progress) ** 1.5;
     }
 }
 
