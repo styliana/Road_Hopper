@@ -3,7 +3,7 @@ import { rows, scene as gameScene } from '../game/sceneData.js';
 import { makeInstance } from './modelLoader.js';
 
 export const GROUND_Y = -0.45;
-export const BOARD_WIDTH = 2.8;
+export const BOARD_WIDTH = 5.0;
 
 export const objects = {
     playerRoot: null,
@@ -18,6 +18,15 @@ const playerRotations = {
     ArrowLeft: -Math.PI / 2,
     ArrowRight: Math.PI / 2
 };
+
+const JUMP_DURATION = 0.25;
+let targetRotation = Math.PI;
+let jumpTime = 0;
+let jumpStartX = 0;
+let jumpStartZ = 0;
+let jumpOffsetX = 0;
+let jumpOffsetZ = 0;
+let jumpHeight = 0;
 
 const rowGeometry = new THREE.BoxGeometry(BOARD_WIDTH, 0.04, 0.35);
 const rowMaterials = {
@@ -37,7 +46,7 @@ export function addRowVisual(scene3D, row) {
     if (row.type === 'road' && previous?.type === 'road' &&
         Math.abs(previous.z - row.z - 0.35) < 0.001) {
         const lineZ = (previous.z + row.z) / 2;
-        for (let x = -1.05; x <= 1.06; x += 0.30) {
+        for (let x = -2.25; x <= 2.25; x += 0.30) {
             const line = new THREE.Mesh(lineGeometry, lineMaterial);
             line.position.set(x, GROUND_Y + 0.003, lineZ);
             root.add(line);
@@ -53,7 +62,7 @@ export function createBasicObjects(scene3D, catTemplate) {
     }
 
     const playerRoot = makeInstance(catTemplate, 0.37);
-    playerRoot.rotation.y = Math.PI;
+    playerRoot.rotation.y = targetRotation;
     scene3D.add(playerRoot);
     objects.playerRoot = playerRoot;
 }
@@ -65,12 +74,56 @@ export function orientPlayer(key) {
         throw new Error('Obiekt gracza Three.js nie został utworzony');
     }
 
-    objects.playerRoot.rotation.y = rotation;
+    targetRotation = rotation;
+}
+
+export function startPlayerJump(targetX, targetZ) {
+    if (!objects.playerRoot) {
+        throw new Error('Obiekt gracza Three.js nie został utworzony');
+    }
+
+    jumpStartX = objects.playerRoot.position.x - targetX;
+    jumpStartZ = objects.playerRoot.position.z - targetZ;
+    jumpTime = JUMP_DURATION;
+}
+
+export function resetPlayerJump() {
+    jumpTime = 0;
+    jumpStartX = 0;
+    jumpStartZ = 0;
+    jumpOffsetX = 0;
+    jumpOffsetZ = 0;
+    jumpHeight = 0;
+}
+
+export function updatePlayerAnimation(dt) {
+    if (!objects.playerRoot) {
+        throw new Error('Obiekt gracza Three.js nie został utworzony');
+    }
+
+    const angle = objects.playerRoot.rotation.y;
+    const difference = Math.atan2(
+        Math.sin(targetRotation - angle),
+        Math.cos(targetRotation - angle)
+    );
+    objects.playerRoot.rotation.y = THREE.MathUtils.lerp(
+        angle,
+        angle + difference,
+        1 - Math.exp(-15 * dt)
+    );
+
+    if (jumpTime <= 0) return;
+
+    jumpTime = Math.max(0, jumpTime - dt);
+    const progress = 1 - jumpTime / JUMP_DURATION;
+    jumpOffsetX = THREE.MathUtils.lerp(jumpStartX, 0, progress);
+    jumpOffsetZ = THREE.MathUtils.lerp(jumpStartZ, 0, progress);
+    jumpHeight = Math.sin(progress * Math.PI) * 0.12;
 }
 
 export function addCarVisual(scene3D, car, carTemplate) {
     const root = makeInstance(carTemplate, 0.40);
-    root.rotation.y = car.speed < 0 ? Math.PI / 2 : -Math.PI / 2;
+    root.rotation.y = car.speed < 0 ? -Math.PI / 2 : Math.PI / 2;
     scene3D.add(root);
     objects.cars.push(root);
 }
@@ -101,7 +154,9 @@ export function syncObjects() {
 
     const player = gameScene.player.position;
     objects.playerRoot.position.set(
-        player[0], GROUND_Y + player[1], player[2]
+        player[0] + jumpOffsetX,
+        GROUND_Y + player[1] + jumpHeight,
+        player[2] + jumpOffsetZ
     );
 
     gameScene.cars.forEach((car, index) => {

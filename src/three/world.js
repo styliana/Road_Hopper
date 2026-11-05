@@ -1,5 +1,6 @@
 import { rows, scene as gameScene } from '../game/sceneData.js';
-import { addRowVisual, addCarVisual, addTreeVisual, objects, BOARD_WIDTH } from './objects.js';
+import { CAR_TRACK_EDGE } from '../game/gameLogic.js';
+import { addRowVisual, addCarVisual, addTreeVisual, objects } from './objects.js';
 import { gameState } from '../game/gameRules.js';
 
 const STEP = 0.35;
@@ -9,8 +10,8 @@ const INITIAL_ROWS = rows.length;
 const FIRST_Z = Math.max(...rows.map(row => row.z));
 let nextIndex = INITIAL_ROWS;
 
-// 9 możliwych kolumn ruchu w osi X odpowiadających krokowi gracza (stepX = 0.25)
-export const TREE_LANES = [-1.00, -0.75, -0.50, -0.25, 0.00, 0.25, 0.50, 0.75, 1.00];
+// 7 możliwych kolumn ruchu w osi X odpowiadających krokowi gracza (stepX = 0.25)
+export const TREE_LANES = [-0.75, -0.50, -0.25, 0.00, 0.25, 0.50, 0.75];
 
 export function getRandomTreePositions() {
     // Zadanie 1: Losowa liczba drzew od 1 do 3
@@ -37,21 +38,12 @@ export function getRandomTreePositions() {
 
 // Zadanie 2: Generowanie początkowych pozycji od 1 do 3 aut z bezpiecznym odstępem
 export function generateCarPositions(count) {
-    if (count === 1) {
-        return [Math.random() * 2.0 - 1.0];
-    }
-    if (count === 2) {
-        return [
-            -1.10 + Math.random() * 0.65, // [-1.10, -0.45]
-             0.45 + Math.random() * 0.65  // [ 0.45,  1.10]
-        ];
-    }
-    // count === 3
-    return [
-        -1.25 + Math.random() * 0.35, // [-1.25, -0.90]
-        -0.18 + Math.random() * 0.36, // [-0.18,  0.18]
-         0.90 + Math.random() * 0.35  // [ 0.90,  1.25]
-    ];
+    const spacing = (2 * CAR_TRACK_EDGE) / count;
+    const offset = Math.random() * spacing;
+    return Array.from(
+        { length: count },
+        (_, index) => -CAR_TRACK_EDGE + offset + index * spacing
+    );
 }
 
 export function prepareWorld() {
@@ -91,14 +83,13 @@ export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate)
         addRowVisual(scene3D, row);
 
         if (type === 'road') {
-            // Zadanie 2: Od 1 do 3 pojazdów na pasie ze wspólnym kierunkiem i zróżnicowanymi prędkościami
+            // Zadanie 2: Od 1 do 3 pojazdów na pasie ze wspólnym kierunkiem i prędkością
             const carCount = Math.floor(Math.random() * 3) + 1;
             const direction = Math.random() < 0.5 ? -1 : 1;
             const carPositions = generateCarPositions(carCount);
+            const baseSpeed = direction * (0.24 + Math.random() * 0.22);
 
             for (const carX of carPositions) {
-                const speedVariation = 0.24 + Math.random() * 0.22;
-                const baseSpeed = direction * speedVariation;
                 const car = {
                     position: [carX, 0, row.z],
                     speed: baseSpeed * gameState.speedMultiplier,

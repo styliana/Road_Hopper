@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { rows, scene } from './game/sceneData.js';
+import { scene } from './game/sceneData.js';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import {
     gameState, updateGameState, restartGame
@@ -19,8 +19,6 @@ const scoreLabel = document.querySelector('#score');
 const bestScoreLabel = document.querySelector('#bestScore');
 const speedLabel = document.querySelector('#speed');
 const livesLabel = document.querySelector('#lives');
-const activeRowsLabel = document.querySelector('#activeRows');
-const activeCarsLabel = document.querySelector('#activeCars');
 const statusLabel = document.querySelector('#status');
 
 const scene3D = new THREE.Scene();
@@ -62,7 +60,7 @@ function render() {
     const height = Math.max(1, canvas.clientHeight);
     renderer3D.setSize(width, height, false);
 
-    const zoom = 1.65;
+    const zoom = 2.2;
     const aspect = width / height;
     camera3D.left = -zoom * aspect;
     camera3D.right = zoom * aspect;
@@ -84,12 +82,6 @@ function updateHud() {
     if (livesLabel) {
         const hearts = '❤️'.repeat(Math.max(0, gameState.lives)) || '💀';
         livesLabel.textContent = `Życia: ${hearts} (${gameState.lives}/${gameState.maxLives})`;
-    }
-    if (activeRowsLabel) {
-        activeRowsLabel.textContent = `Aktywne pasy: ${rows.length}`;
-    }
-    if (activeCarsLabel) {
-        activeCarsLabel.textContent = `Aktywne auta: ${scene.cars.length}`;
     }
     if (gameState.status === 'lost') {
         statusLabel.textContent = 'Koniec gry! Brak żyć. Naciśnij R.';
@@ -137,7 +129,7 @@ createBasicObjects(scene3D, catTemplate);
 addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 
 if (GAME_MODE === 'endless') {
-    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+    extendWorld(scene3D, carTemplate, treeTemplate);
     resetFollowCamera();
 }
 
@@ -155,7 +147,7 @@ function frame(time) {
         if (GAME_MODE === 'endless' &&
             gameState.lives < livesBefore &&
             gameState.status === 'playing') {
-            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate);
             resetFollowCamera();
         }
     }
@@ -163,7 +155,7 @@ function frame(time) {
     if (GAME_MODE === 'endless' &&
         !isPaused && gameState.status === 'playing') {
         updateFollowCamera(dt);
-        extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+        extendWorld(scene3D, carTemplate, treeTemplate);
     }
 
     render();
@@ -186,7 +178,7 @@ window.addEventListener('keydown', event => {
         restartGame();
         orientPlayer('ArrowUp');
         if (GAME_MODE === 'endless') {
-            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate);
             resetFollowCamera();
         }
         isPaused = false;
