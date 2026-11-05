@@ -8,6 +8,15 @@
 </head>
 <body>
     <div id="statusOverlay">▶ W GRZE (Spacja: Pauza)</div>
+    <div id="explosionBurst" aria-hidden="true"></div>
+    <div id="explosionFlash" aria-hidden="true"></div>
+    <div id="gameOverOverlay" hidden role="status" aria-live="assertive">
+        <div class="game-over-card">
+            <strong>GAME OVER</strong>
+            <span id="gameOverScore"></span>
+            <span id="gameOverMessage"></span>
+        </div>
+    </div>
     <canvas id="gameCanvas"></canvas>
     <div id="hud">
         <span id="score">Punkty: 0</span>
