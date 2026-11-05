@@ -1,7 +1,7 @@
 import { rows, scene } from './sceneData.js';
 
 export const gameState = {
-    status: 'playing', // 'playing', 'gameOver', 'lost' lub 'won'
+    status: 'playing', // 'playing', 'hit', 'gameOver', 'lost' lub 'won'
     score: 0,
     bestScore: 0,      // Zadanie 3: licznik najlepszego wyniku (High Score)
     bestLane: 0,
@@ -53,7 +53,7 @@ export function updateGameState() {
         if (gameState.lives <= 0) {
             gameState.status = 'gameOver';
         } else {
-            scene.player.position.splice(0, 3, ...startPlayer);
+            gameState.status = 'hit';
         }
         return;
     }
@@ -73,6 +73,13 @@ export function updateGameState() {
         // Zadanie 2: Stopniowe zwiększanie prędkości aut wraz z punktami
         applySpeedIncrease();
     }
+}
+
+export function completeRespawn() {
+    if (gameState.status !== 'hit') return;
+
+    scene.player.position.splice(0, 3, ...startPlayer);
+    gameState.status = 'playing';
 }
 
 export function restartGame() {

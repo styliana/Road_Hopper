@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { scene } from './game/sceneData.js';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import {
-    gameState, updateGameState, restartGame
+    gameState, completeRespawn, updateGameState, restartGame
 } from './game/gameRules.js';
 import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
@@ -168,7 +168,9 @@ function updateHud() {
         const hearts = '❤️'.repeat(Math.max(0, gameState.lives)) || '💀';
         livesLabel.textContent = `Życia: ${hearts} (${gameState.lives}/${gameState.maxLives})`;
     }
-    if (gameState.status === 'gameOver') {
+    if (gameState.status === 'hit') {
+        statusLabel.textContent = 'Zderzenie! Powrót na start za chwilę.';
+    } else if (gameState.status === 'gameOver') {
         statusLabel.textContent = 'GAME OVER! Ostatnie zderzenie.';
     } else if (gameState.status === 'lost') {
         statusLabel.textContent = 'Koniec gry! Brak żyć. Naciśnij R.';
@@ -222,11 +224,13 @@ if (GAME_MODE === 'endless') {
 }
 
 let previousTime = null;
+let respawnTimer = 0;
 function frame(time) {
     const dt = previousTime === null
         ? 0
         : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
+    const recoveringFromHit = gameState.status === 'hit';
 
     if (!isPaused && gameState.status === 'playing') {
         updatePlayerAnimation(dt);
@@ -240,14 +244,21 @@ function frame(time) {
                 startGameOverSequence(collisionPosition);
             } else {
                 resetPlayerJump();
-                createCollisionDust(scene3D, scene.player.position);
+                createCollisionDust(scene3D, collisionPosition);
+                respawnTimer = 0.6;
             }
         }
-        if (GAME_MODE === 'endless' &&
-            gameState.lives < livesBefore &&
-            gameState.status === 'playing') {
-            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
-            resetFollowCamera();
+    }
+
+    if (recoveringFromHit) {
+        respawnTimer -= dt;
+        if (respawnTimer <= 0) {
+            completeRespawn();
+            resetPlayerJump();
+            if (GAME_MODE === 'endless') {
+                resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+                resetFollowCamera();
+            }
         }
     }
 
@@ -284,6 +295,7 @@ window.addEventListener('keydown', event => {
         if (event.repeat) return;
         if (gameState.status === 'gameOver') return;
         restartGame();
+        respawnTimer = 0;
         resetPlayerJump();
         resetPlayerVisual();
         orientPlayer('ArrowUp');
