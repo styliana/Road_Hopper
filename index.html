@@ -8,6 +8,13 @@
 </head>
 <body>
     <div id="statusOverlay">▶ W GRZE (Spacja: Pauza)</div>
+    <div id="boostPopup" role="status" aria-live="polite" aria-atomic="true">
+        <span class="boost-popup-icon" aria-hidden="true">⚡</span>
+        <span class="boost-popup-copy">
+            <strong>BOOST ZEBRANY!</strong>
+            <span>Szczury zwalniają do 1× na 5 sekund</span>
+        </span>
+    </div>
     <div id="explosionBurst" aria-hidden="true"></div>
     <div id="explosionFlash" aria-hidden="true"></div>
     <div id="gameOverOverlay" hidden role="status" aria-live="assertive">
@@ -21,11 +28,13 @@
     <div id="hud">
         <span id="score">Punkty: 0</span>
         <span id="bestScore">Najlepszy wynik: 0</span>
-        <span id="speed">Prędkość aut: 1.00x</span>
         <span id="lives">Życia: ❤️❤️❤️ (3/3)</span>
-        <span id="activeRows">Aktywne pasy: 0</span>
-        <span id="activeCars">Aktywne auta: 0</span>
-        <span id="status">Tryb Endless: idź przed siebie i unikaj przeszkód!</span>
+        <div id="worldStats">
+            <span id="activeRows">Pasy: 0</span>
+            <span id="activeCars">Szczury: 0</span>
+            <span id="speed">Szczury 1.00×</span>
+        </div>
+        <span id="status"></span>
     </div>
     <script type="module" src="/src/main.js"></script>
 </body>
