@@ -7,7 +7,8 @@ import {
 import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
     addModels, createBasicObjects, createCollisionDust, createPlayerExplosion,
-    orientPlayer, resetPlayerVisual, syncObjects, updateParticleEffects
+    orientPlayer, resetPlayerJump, resetPlayerVisual, startPlayerJump,
+    syncObjects, updateParticleEffects, updatePlayerAnimation
 } from './three/objects.js';
 import {
     prepareWorld, extendWorld, resetWorld
@@ -216,7 +217,7 @@ createBasicObjects(scene3D, catTemplate);
 addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 
 if (GAME_MODE === 'endless') {
-    extendWorld(scene3D, carTemplate, treeTemplate);
+    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
     resetFollowCamera();
 }
 
@@ -228,6 +229,7 @@ function frame(time) {
     previousTime = time;
 
     if (!isPaused && gameState.status === 'playing') {
+        updatePlayerAnimation(dt);
         const livesBefore = gameState.lives;
         const collisionPosition = [...scene.player.position];
         updateCars(dt);
@@ -237,13 +239,14 @@ function frame(time) {
                 createPlayerExplosion(scene3D, collisionPosition);
                 startGameOverSequence(collisionPosition);
             } else {
+                resetPlayerJump();
                 createCollisionDust(scene3D, scene.player.position);
             }
         }
         if (GAME_MODE === 'endless' &&
             gameState.lives < livesBefore &&
             gameState.status === 'playing') {
-            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
             resetFollowCamera();
         }
     }
@@ -259,7 +262,7 @@ function frame(time) {
     if (GAME_MODE === 'endless' &&
         !isPaused && gameState.status === 'playing') {
         updateFollowCamera(dt);
-        extendWorld(scene3D, carTemplate, treeTemplate);
+        extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
     }
 
     render();
@@ -281,6 +284,7 @@ window.addEventListener('keydown', event => {
         if (event.repeat) return;
         if (gameState.status === 'gameOver') return;
         restartGame();
+        resetPlayerJump();
         resetPlayerVisual();
         orientPlayer('ArrowUp');
         if (gameOverOverlay) gameOverOverlay.hidden = true;
@@ -288,7 +292,7 @@ window.addEventListener('keydown', event => {
         if (explosionBurst) explosionBurst.classList.remove('active');
         gameOverElapsed = 0;
         if (GAME_MODE === 'endless') {
-            resetWorld(scene3D, carTemplate, treeTemplate);
+            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
             resetFollowCamera();
         }
         isPaused = false;
@@ -302,6 +306,11 @@ window.addEventListener('keydown', event => {
     if (!event.key.startsWith('Arrow')) return;
     event.preventDefault();
     if (event.repeat) return;
+    const previousPosition = [...scene.player.position];
     movePlayer(event.key);
-    orientPlayer(event.key);
+    const [x, , z] = scene.player.position;
+    if (x !== previousPosition[0] || z !== previousPosition[2]) {
+        orientPlayer(event.key);
+        startPlayerJump(x, z);
+    }
 });
