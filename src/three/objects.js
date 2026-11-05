@@ -9,6 +9,7 @@ export const objects = {
     playerRoot: null,
     cars: [],
     trees: [],
+    boosts: [],
     rows: new Map(),
 };
 
@@ -29,6 +30,7 @@ let jumpOffsetZ = 0;
 let jumpHeight = 0;
 const particleEffects = [];
 const shockwaveEffects = [];
+let boostAnimationTime = 0;
 
 const rowGeometry = new THREE.BoxGeometry(BOARD_WIDTH, 0.04, 0.35);
 const rowMaterials = {
@@ -389,6 +391,21 @@ export function addTreeVisual(scene3D, tree, treeTemplate) {
     objects.trees.push(root);
 }
 
+export function addBoostVisual(scene3D, boostTemplate) {
+    const root = makeInstance(boostTemplate, 0.30);
+    scene3D.add(root);
+    objects.boosts.push(root);
+}
+
+export function updateBoostVisuals(dt) {
+    boostAnimationTime += dt;
+    for (const boost of objects.boosts) {
+        boost.rotation.y += dt * 1.8;
+        const pulse = 1 + Math.sin(boostAnimationTime * 4) * 0.08;
+        boost.scale.setScalar(pulse);
+    }
+}
+
 export function addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
     for (const car of gameScene.cars) {
         addCarVisual(scene3D, car, carTemplate);
@@ -431,6 +448,16 @@ export function syncObjects() {
         const position = tree.position;
         root.position.set(
             position[0], GROUND_Y + position[1], position[2]
+        );
+    });
+
+    gameScene.boosts.forEach((boost, index) => {
+        const root = objects.boosts[index];
+        if (!root) return;
+
+        const position = boost.position;
+        root.position.set(
+            position[0], GROUND_Y + position[1] + 0.04, position[2]
         );
     });
 }

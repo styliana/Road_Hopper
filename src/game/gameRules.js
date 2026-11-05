@@ -7,7 +7,8 @@ export const gameState = {
     bestLane: 0,
     lives: 3,
     maxLives: 3,
-    speedMultiplier: 1.0
+    speedMultiplier: 1.0,
+    boostTimeRemaining: 0
 };
 
 const startPlayer = [...scene.player.position];
@@ -18,7 +19,9 @@ const lanes = rows.map(row => row.z).sort((a, b) => b - a);
 
 export function applySpeedIncrease() {
     // Każde 10 punktów zwiększa prędkość aut o 25% (kierunek/znak prędkości zostaje zachowany)
-    const factor = 1 + (gameState.score * 0.025);
+    const factor = gameState.boostTimeRemaining > 0
+        ? 1
+        : 1 + (gameState.score * 0.025);
     gameState.speedMultiplier = factor;
     scene.cars.forEach((car, index) => {
         const baseSpeed = index < startSpeeds.length
@@ -28,6 +31,23 @@ export function applySpeedIncrease() {
     });
 }
 export const updateDifficulty = applySpeedIncrease;
+
+export function activateSpeedBoost() {
+    gameState.boostTimeRemaining = 5;
+    applySpeedIncrease();
+}
+
+export function updateSpeedBoost(dt) {
+    if (gameState.boostTimeRemaining <= 0) return;
+
+    gameState.boostTimeRemaining = Math.max(
+        0,
+        gameState.boostTimeRemaining - dt
+    );
+    if (gameState.boostTimeRemaining === 0) {
+        applySpeedIncrease();
+    }
+}
 
 export function checkCollision() {
     const player = scene.player.position;
@@ -93,5 +113,6 @@ export function restartGame() {
     gameState.bestLane = 0;
     gameState.lives = gameState.maxLives;
     gameState.speedMultiplier = 1.0;
+    gameState.boostTimeRemaining = 0;
     // Zadanie 3: gameState.bestScore pozostaje zachowany po restarcie gry
 }

@@ -1,6 +1,8 @@
 import { rows, scene as gameScene } from '../game/sceneData.js';
 import { CAR_TRACK_EDGE } from '../game/gameLogic.js';
-import { addRowVisual, addCarVisual, addTreeVisual, objects } from './objects.js';
+import {
+    addRowVisual, addCarVisual, addTreeVisual, addBoostVisual, objects
+} from './objects.js';
 import { gameState } from '../game/gameRules.js';
 
 const STEP = 0.35;
@@ -11,8 +13,15 @@ const FIRST_Z = Math.max(...rows.map(row => row.z));
 let nextIndex = INITIAL_ROWS;
 let nextTreeModel = 'tree';
 
+function getBoostInterval() {
+    return Math.floor(Math.random() * 6) + 10;
+}
+
+let nextBoostLane = INITIAL_ROWS + getBoostInterval();
+
 // 7 możliwych kolumn ruchu w osi X odpowiadających krokowi gracza (stepX = 0.25)
 export const TREE_LANES = [-0.75, -0.50, -0.25, 0.00, 0.25, 0.50, 0.75];
+const BOOST_LANES = [-1.25, -1.00, -0.75, -0.50, -0.25, 0.00, 0.25, 0.50, 0.75, 1.00, 1.25];
 
 export function getRandomTreePositions() {
     // Zadanie 1: Losowa liczba drzew od 1 do 3
@@ -57,6 +66,48 @@ function getNextTreeTemplate(treeTemplate, newTreeTemplate) {
     return template;
 }
 
+function createBoost(scene3D, row, boostTemplate) {
+    const candidates = [...BOOST_LANES];
+    const safeCandidates = candidates.filter(x =>
+        !gameScene.trees.some(tree =>
+            tree.laneIndex === row.laneIndex &&
+            Math.abs(tree.position[0] - x) < 0.38
+        ) &&
+        !gameScene.cars.some(car =>
+            car.laneIndex === row.laneIndex &&
+            Math.abs(car.position[0] - x) < 0.42
+        )
+    );
+    const available = safeCandidates.length > 0
+        ? safeCandidates
+        : candidates.filter(x =>
+            !gameScene.trees.some(tree =>
+                tree.laneIndex === row.laneIndex &&
+                Math.abs(tree.position[0] - x) < 0.38
+            )
+        );
+    const positions = available.length > 0 ? available : candidates;
+    const x = positions[Math.floor(Math.random() * positions.length)];
+    gameScene.boosts.push({
+        position: [x, 0, row.z],
+        laneIndex: row.laneIndex
+    });
+    addBoostVisual(scene3D, boostTemplate);
+}
+
+export function collectBoost(scene3D, position) {
+    const boostIndex = gameScene.boosts.findIndex(boost =>
+        Math.abs(boost.position[0] - position[0]) < 0.2 &&
+        Math.abs(boost.position[2] - position[2]) < 0.18
+    );
+    if (boostIndex < 0) return false;
+
+    scene3D.remove(objects.boosts[boostIndex]);
+    objects.boosts.splice(boostIndex, 1);
+    gameScene.boosts.splice(boostIndex, 1);
+    return true;
+}
+
 export function prepareWorld() {
     rows.sort((a, b) => b.z - a.z);
     rows.forEach((row, index) => {
@@ -71,7 +122,9 @@ function playerLane() {
     return row?.laneIndex ?? 0;
 }
 
-export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
+export function extendWorld(
+    scene3D, carTemplate, treeTemplate, newTreeTemplate, boostTemplate
+) {
     const current = playerLane();
     while (nextIndex <= current + AHEAD) {
         const index = nextIndex++;
@@ -127,6 +180,11 @@ export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate)
                 addTreeVisual(scene3D, tree, template);
             }
         }
+
+        if (row.laneIndex >= nextBoostLane) {
+            createBoost(scene3D, row, boostTemplate);
+            nextBoostLane = row.laneIndex + getBoostInterval();
+        }
     }
 
     for (const row of [...rows]) {
@@ -138,6 +196,13 @@ export function extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate)
 }
 
 function removeGeneratedRow(scene3D, row) {
+    for (let i = gameScene.boosts.length - 1; i >= 0; i--) {
+        if (gameScene.boosts[i].laneIndex !== row.laneIndex) continue;
+        scene3D.remove(objects.boosts[i]);
+        objects.boosts.splice(i, 1);
+        gameScene.boosts.splice(i, 1);
+    }
+
     for (let i = gameScene.cars.length - 1; i >= 0; i--) {
         if (gameScene.cars[i].laneIndex !== row.laneIndex) continue;
         scene3D.remove(objects.cars[i]);
@@ -157,12 +222,17 @@ function removeGeneratedRow(scene3D, row) {
     rows.splice(rows.indexOf(row), 1);
 }
 
-export function resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate) {
+export function resetWorld(
+    scene3D, carTemplate, treeTemplate, newTreeTemplate, boostTemplate
+) {
     for (const row of [...rows]) {
         if (row.laneIndex >= INITIAL_ROWS) {
             removeGeneratedRow(scene3D, row);
         }
     }
     nextIndex = INITIAL_ROWS;
-    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+    nextBoostLane = INITIAL_ROWS + getBoostInterval();
+    extendWorld(
+        scene3D, carTemplate, treeTemplate, newTreeTemplate, boostTemplate
+    );
 }

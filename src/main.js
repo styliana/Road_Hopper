@@ -1,17 +1,19 @@
 import * as THREE from 'three';
-import { scene } from './game/sceneData.js';
+import { rows, scene } from './game/sceneData.js';
 import { updateCars, movePlayer } from './game/gameLogic.js';
 import {
-    gameState, completeRespawn, updateGameState, restartGame
+    gameState, activateSpeedBoost, completeRespawn, updateGameState,
+    updateSpeedBoost, restartGame
 } from './game/gameRules.js';
 import { countTriangles, loadTemplate } from './three/modelLoader.js';
 import {
     addModels, createBasicObjects, createCollisionDust, createPlayerExplosion,
     orientPlayer, resetPlayerJump, resetPlayerVisual, startPlayerJump,
-    syncObjects, updateParticleEffects, updatePlayerAnimation
+    syncObjects, updateBoostVisuals, updateParticleEffects,
+    updatePlayerAnimation
 } from './three/objects.js';
 import {
-    prepareWorld, extendWorld, resetWorld
+    collectBoost, prepareWorld, extendWorld, resetWorld
 } from './three/world.js';
 
 const GAME_MODE = 'endless';
@@ -21,6 +23,8 @@ const scoreLabel = document.querySelector('#score');
 const bestScoreLabel = document.querySelector('#bestScore');
 const speedLabel = document.querySelector('#speed');
 const livesLabel = document.querySelector('#lives');
+const activeRowsLabel = document.querySelector('#activeRows');
+const activeCarsLabel = document.querySelector('#activeCars');
 const statusLabel = document.querySelector('#status');
 const gameOverOverlay = document.querySelector('#gameOverOverlay');
 const gameOverMessage = document.querySelector('#gameOverMessage');
@@ -28,9 +32,15 @@ const gameOverScore = document.querySelector('#gameOverScore');
 const explosionFlash = document.querySelector('#explosionFlash');
 const explosionBurst = document.querySelector('#explosionBurst');
 const hud = document.querySelector('#hud');
+const boostPopup = document.querySelector('#boostPopup');
+let boostPopupTimer = null;
 
 const scene3D = new THREE.Scene();
 scene3D.background = new THREE.Color(0x141b26);
+const boostSound = new Audio(
+    new URL('../sound_effects/swoosh_effect_sound.mp3', import.meta.url)
+);
+boostSound.preload = 'auto';
 
 const renderer3D = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer3D.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -162,11 +172,21 @@ function updateHud() {
         bestScoreLabel.textContent = `Najlepszy wynik: ${gameState.bestScore}`;
     }
     if (speedLabel) {
-        speedLabel.textContent = `Prędkość aut: ${gameState.speedMultiplier.toFixed(2)}x`;
+        const boostActive = gameState.boostTimeRemaining > 0;
+        speedLabel.textContent = boostActive
+            ? `Szczury 1.00× · boost ${gameState.boostTimeRemaining.toFixed(1)} s`
+            : `Szczury ${gameState.speedMultiplier.toFixed(2)}×`;
+        speedLabel.classList.toggle('boost-active', boostActive);
     }
     if (livesLabel) {
         const hearts = '❤️'.repeat(Math.max(0, gameState.lives)) || '💀';
         livesLabel.textContent = `Życia: ${hearts} (${gameState.lives}/${gameState.maxLives})`;
+    }
+    if (activeRowsLabel) {
+        activeRowsLabel.textContent = `Pasy: ${rows.length}`;
+    }
+    if (activeCarsLabel) {
+        activeCarsLabel.textContent = `Szczury: ${scene.cars.length}`;
     }
     if (gameState.status === 'hit') {
         statusLabel.textContent = 'Zderzenie! Powrót na start za chwilę.';
@@ -177,10 +197,21 @@ function updateHud() {
     } else if (gameState.status === 'won') {
         statusLabel.textContent = 'Meta! Naciśnij R.';
     } else {
-        statusLabel.textContent = GAME_MODE === 'endless'
-            ? 'Tryb Endless: idź przed siebie i unikaj przeszkód!'
-            : 'Dotrzyj do ostatniego pasa trawy.';
+        statusLabel.textContent = '';
     }
+}
+
+function showBoostPopup() {
+    if (!boostPopup) return;
+
+    boostPopup.classList.remove('show');
+    void boostPopup.offsetWidth;
+    boostPopup.classList.add('show');
+    clearTimeout(boostPopupTimer);
+    boostPopupTimer = setTimeout(() => {
+        boostPopup.classList.remove('show');
+        boostPopupTimer = null;
+    }, 2800);
 }
 
 // Zadanie 3: Obsługa pauzy oraz blokada ruchu gracza
@@ -201,11 +232,14 @@ function togglePause() {
     }
 }
 
-const [ratTemplate, treeTemplate, newTreeTemplate, catTemplate] = await Promise.all([
+const [
+    ratTemplate, treeTemplate, newTreeTemplate, catTemplate, boostTemplate
+] = await Promise.all([
     loadTemplate('/models/szczur.glb'),
     loadTemplate('/models/tree.glb'),
     loadTemplate('/models/drzewko.glb'),
-    loadTemplate('/models/kociak.glb')
+    loadTemplate('/models/kociak.glb'),
+    loadTemplate('/models/diamond.glb')
 ]);
 const carTemplate = ratTemplate;
 
@@ -219,7 +253,9 @@ createBasicObjects(scene3D, catTemplate);
 addModels(scene3D, carTemplate, treeTemplate, newTreeTemplate);
 
 if (GAME_MODE === 'endless') {
-    extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+    extendWorld(
+        scene3D, carTemplate, treeTemplate, newTreeTemplate, boostTemplate
+    );
     resetFollowCamera();
 }
 
@@ -256,9 +292,30 @@ function frame(time) {
             completeRespawn();
             resetPlayerJump();
             if (GAME_MODE === 'endless') {
-                resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+                resetWorld(
+                    scene3D, carTemplate, treeTemplate, newTreeTemplate,
+                    boostTemplate
+                );
                 resetFollowCamera();
             }
+        }
+    }
+
+    if (!isPaused &&
+        (gameState.status === 'playing' || gameState.status === 'hit')) {
+        updateSpeedBoost(dt);
+    }
+
+    if (!isPaused && gameState.status === 'playing' &&
+        collectBoost(scene3D, scene.player.position)) {
+        activateSpeedBoost();
+        showBoostPopup();
+        boostSound.currentTime = 0;
+        const playback = boostSound.play();
+        if (playback) {
+            playback.catch(error => {
+                console.warn('Nie udało się odtworzyć dźwięku boosta:', error);
+            });
         }
     }
 
@@ -268,12 +325,15 @@ function frame(time) {
 
     if (!isPaused) {
         updateParticleEffects(scene3D, dt);
+        updateBoostVisuals(dt);
     }
 
     if (GAME_MODE === 'endless' &&
         !isPaused && gameState.status === 'playing') {
         updateFollowCamera(dt);
-        extendWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+        extendWorld(
+            scene3D, carTemplate, treeTemplate, newTreeTemplate, boostTemplate
+        );
     }
 
     render();
@@ -304,7 +364,10 @@ window.addEventListener('keydown', event => {
         if (explosionBurst) explosionBurst.classList.remove('active');
         gameOverElapsed = 0;
         if (GAME_MODE === 'endless') {
-            resetWorld(scene3D, carTemplate, treeTemplate, newTreeTemplate);
+            resetWorld(
+                scene3D, carTemplate, treeTemplate, newTreeTemplate,
+                boostTemplate
+            );
             resetFollowCamera();
         }
         isPaused = false;

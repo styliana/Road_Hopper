@@ -16,6 +16,7 @@ export const scene = {
         { position: [ 0.85, 0.0, 0.00], color: [0.12, 0.30, 0.90], speed: -0.45 },
         { position: [-0.85, 0.0, 0.00], color: [0.85, 0.20, 0.75], speed: -0.45 }
     ],
+    boosts: [],
     trees: [
         { position: [-1.05, 0.0, 0.70], model: 'tree' },
         { position: [ 1.05, 0.0, 0.70], model: 'drzewko' },
